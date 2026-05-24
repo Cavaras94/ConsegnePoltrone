@@ -8,6 +8,22 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.0.0/).
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-05-24
+
+### Rimosso
+- Pulsante "Nuova consegna" e relativa rotta `/consegne/nuova`
+- Pulsante "Nuovo lavoro" e relativa rotta `/lavori/nuovo`
+- Link "Modifica" dal dettaglio consegna e dettaglio installazione
+- La dashboard è ora **read-only** per ordini e installazioni
+
+### Aggiunto
+- **Indirizzo cliente cliccabile** → apre Google Maps (o app mappe) con l'indirizzo precalcolato, sia in ConsegnaDetail che in LavoroDetail
+- **Telefono cliente** già cliccabile (`tel:`), ora con stile più evidente (bold + hover)
+- Icona `Navigation` affiancata all'indirizzo per rendere chiara l'azione
+
+### Nota tecnica
+Se i dati mock non sono visibili: fare **Ctrl+Shift+R** (hard refresh) per forzare la riregistrazione del Service Worker MSW con i nuovi handler
+
 ## [0.5.0] — 2026-05-24
 
 ### Aggiunto
@@ -103,7 +119,8 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.2.0...v0.3.0

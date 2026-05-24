@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, MapPin, Phone, Mail, Calendar, FileText,
-  Upload, Download, Trash2, CheckCircle, Loader2, AlertCircle, Info, Wrench, Eye
+  Upload, Download, Trash2, CheckCircle, Loader2, AlertCircle, Info, Wrench, Eye, Navigation
 } from 'lucide-react';
 import DocumentPreview from '../components/ui/DocumentPreview';
 import { format } from 'date-fns';
@@ -87,12 +87,6 @@ export default function LavoroDetail() {
             ) : 'Squadra non assegnata'}
           </p>
         </div>
-        {isAdmin && (
-          <a href={`/lavori/${lavoroId}/modifica`}
-            className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50">
-            Modifica
-          </a>
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -101,17 +95,29 @@ export default function LavoroDetail() {
           {/* Cliente */}
           <Section title="Dati cliente" icon={<MapPin size={16} className="text-blue-500" />}>
             <InfoRow label="Nome" value={lavoro.clienteNome} />
-            <InfoRow label="Indirizzo" value={`${lavoro.clienteIndirizzo}, ${lavoro.clienteCap} ${lavoro.clienteCitta} (${lavoro.clienteProvincia})`} />
+            <InfoRow label="Indirizzo" value={
+              <a
+                href={`https://maps.google.com/?q=${encodeURIComponent(
+                  `${lavoro.clienteIndirizzo}, ${lavoro.clienteCap} ${lavoro.clienteCitta}`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-700 flex items-center gap-1 underline-offset-2 hover:underline"
+              >
+                <Navigation size={12} className="flex-shrink-0" />
+                {lavoro.clienteIndirizzo}, {lavoro.clienteCap} {lavoro.clienteCitta} ({lavoro.clienteProvincia})
+              </a>
+            } />
             {lavoro.clienteTelefono && (
               <InfoRow label="Telefono" value={
-                <a href={`tel:${lavoro.clienteTelefono}`} className="text-blue-600 flex items-center gap-1">
+                <a href={`tel:${lavoro.clienteTelefono}`} className="text-blue-600 hover:text-blue-700 flex items-center gap-1 font-semibold">
                   <Phone size={12} />{lavoro.clienteTelefono}
                 </a>
               } />
             )}
             {lavoro.clienteEmail && (
               <InfoRow label="Email" value={
-                <a href={`mailto:${lavoro.clienteEmail}`} className="text-blue-600 flex items-center gap-1">
+                <a href={`mailto:${lavoro.clienteEmail}`} className="text-blue-600 hover:text-blue-700 flex items-center gap-1">
                   <Mail size={12} />{lavoro.clienteEmail}
                 </a>
               } />

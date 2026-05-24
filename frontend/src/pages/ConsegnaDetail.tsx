@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, MapPin, Phone, Mail, Package, Euro,
   Calendar, FileText, Upload, Download, Trash2,
-  CheckCircle, AlertCircle, Loader2, Info, Eye,
+  CheckCircle, AlertCircle, Loader2, Info, Eye, Navigation,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { consegneService } from '../services/consegne.service';
@@ -72,12 +72,6 @@ export default function ConsegnaDetail() {
             Ordine del {format(new Date(consegna.dataOrdine), 'd MMMM yyyy', { locale: it })}
           </p>
         </div>
-        {isAdmin && (
-          <Link to={`/consegne/${consegnaId}/modifica`}
-            className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50">
-            Modifica
-          </Link>
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -86,17 +80,29 @@ export default function ConsegnaDetail() {
           {/* Cliente */}
           <Section title="Dati cliente" icon={<MapPin size={16} className="text-blue-500" />}>
             <InfoRow label="Nome" value={consegna.clienteNome} />
-            <InfoRow label="Indirizzo" value={`${consegna.clienteIndirizzo}, ${consegna.clienteCap} ${consegna.clienteCitta} (${consegna.clienteProvincia})`} />
+            <InfoRow label="Indirizzo" value={
+              <a
+                href={`https://maps.google.com/?q=${encodeURIComponent(
+                  `${consegna.clienteIndirizzo}, ${consegna.clienteCap} ${consegna.clienteCitta}`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-700 flex items-center gap-1 underline-offset-2 hover:underline"
+              >
+                <Navigation size={12} className="flex-shrink-0" />
+                {consegna.clienteIndirizzo}, {consegna.clienteCap} {consegna.clienteCitta} ({consegna.clienteProvincia})
+              </a>
+            } />
             {consegna.clienteTelefono && (
               <InfoRow label="Telefono" value={
-                <a href={`tel:${consegna.clienteTelefono}`} className="text-blue-600 flex items-center gap-1">
+                <a href={`tel:${consegna.clienteTelefono}`} className="text-blue-600 hover:text-blue-700 flex items-center gap-1 font-semibold">
                   <Phone size={12} />{consegna.clienteTelefono}
                 </a>
               } />
             )}
             {consegna.clienteEmail && (
               <InfoRow label="Email" value={
-                <a href={`mailto:${consegna.clienteEmail}`} className="text-blue-600 flex items-center gap-1">
+                <a href={`mailto:${consegna.clienteEmail}`} className="text-blue-600 hover:text-blue-700 flex items-center gap-1">
                   <Mail size={12} />{consegna.clienteEmail}
                 </a>
               } />

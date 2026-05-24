@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Plus, Search, Filter, Calendar, List, Wrench,
+  Search, Filter, Calendar, List, Wrench,
   ArrowUpDown, ArrowUp, ArrowDown, AlertTriangle, FileText,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -122,20 +122,11 @@ export default function Lavori() {
           <h1 className="text-2xl font-bold text-gray-900">Installazioni</h1>
           {data && <p className="text-sm text-gray-500 mt-0.5">{righe.length} / {data.total} lavori</p>}
         </div>
-        <div className="flex gap-2 flex-shrink-0">
-          <Link to="/lavori/calendario"
-            className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-sm font-medium transition-colors">
-            <Calendar size={16} />
-            <span className="hidden sm:inline">Calendario</span>
-          </Link>
-          {isAdmin && (
-            <Link to="/lavori/nuovo"
-              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">
-              <Plus size={16} />
-              <span className="hidden sm:inline">Nuovo</span>
-            </Link>
-          )}
-        </div>
+        <Link to="/lavori/calendario"
+          className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-sm font-medium transition-colors flex-shrink-0">
+          <Calendar size={16} />
+          <span className="hidden sm:inline">Calendario</span>
+        </Link>
       </div>
 
       {/* Toggle categoria */}

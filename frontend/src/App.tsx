@@ -6,9 +6,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Consegne from './pages/Consegne';
 import ConsegnaDetail from './pages/ConsegnaDetail';
-import NuovaConsegna from './pages/NuovaConsegna';
 import Lavori from './pages/Lavori';
-import NuovoLavoro from './pages/NuovoLavoro';
 import LavoroDetail from './pages/LavoroDetail';
 import Calendario from './pages/Calendario';
 import Squadre from './pages/Squadre';
@@ -69,16 +67,10 @@ function AppRoutes() {
         {/* Consegne */}
         <Route path="consegne" element={<Consegne />} />
         <Route path="consegne/:id" element={<ConsegnaDetail />} />
-        <Route path="consegne/nuova" element={
-          <PrivateRoute allowedRoles={['Admin']}><NuovaConsegna /></PrivateRoute>
-        } />
 
         {/* Installazioni */}
         <Route path="lavori" element={
           <PrivateRoute allowedRoles={['Admin', 'Manager', 'Caposquadra']}><Lavori /></PrivateRoute>
-        } />
-        <Route path="lavori/nuovo" element={
-          <PrivateRoute allowedRoles={['Admin']}><NuovoLavoro /></PrivateRoute>
         } />
         <Route path="lavori/calendario" element={
           <PrivateRoute allowedRoles={['Admin', 'Manager', 'Caposquadra']}><Calendario /></PrivateRoute>

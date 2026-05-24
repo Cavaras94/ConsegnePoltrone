@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Plus, Search, Filter, Package,
+  Search, Filter, Package,
   ArrowUpDown, ArrowUp, ArrowDown, Clock,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -46,7 +46,7 @@ const STATI_PER_SEZIONE: Record<Sezione, { value: string; label: string }[]> = {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function Consegne() {
-  const { isAdmin } = useAuth();
+  useAuth(); // mantiene il contesto ma non serve isAdmin
   const navigate = useNavigate();
 
   const [cerca,       setCerca]       = useState('');
@@ -104,19 +104,9 @@ export default function Consegne() {
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 mb-5">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Consegne</h1>
-          {data && <p className="text-sm text-gray-500 mt-0.5">{righe.length} / {data.total} totali</p>}
-        </div>
-        {isAdmin && (
-          <Link to="/consegne/nuova"
-            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex-shrink-0">
-            <Plus size={15} />
-            <span className="hidden sm:inline">Nuova consegna</span>
-            <span className="sm:hidden">Nuova</span>
-          </Link>
-        )}
+      <div className="mb-5">
+        <h1 className="text-2xl font-bold text-gray-900">Consegne</h1>
+        {data && <p className="text-sm text-gray-500 mt-0.5">{righe.length} / {data.total} totali</p>}
       </div>
 
       {/* Toggle sezione */}
