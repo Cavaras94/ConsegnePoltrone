@@ -112,7 +112,7 @@
                 { "key": "al",        "value": "", "disabled": true, "description": "Data ISO: 2026-05-31" }
               ]
             },
-            "description": "Lista paginata. I Trasportatori vedono solo le proprie consegne.\n\nHeader risposta: `X-Total-Count` con il numero totale.\n\n**Filtri disponibili:**\n- `stato` — filtra per stato\n- `cerca` — ricerca testuale\n- `dal` / `al` — range date\n- `pagina` / `perPagina` — paginazione"
+            "description": "Lista paginata. I Trasportatori vedono solo le proprie consegne.\n\nHeader risposta: `X-Total-Count` con il numero totale.\n\n**Filtri disponibili:**\n- `stato` — filtra per stato\n- `cerca` — ricerca testuale (cliente, città, ordine, codice/descrizione articoli)\n- `dal` / `al` — range date\n- `pagina` / `perPagina` — paginazione\n\n**Campi restituiti per ogni item:**\n- `articoliSommario` — descrizione primo articolo o \"N articoli\" se multipli\n- `articoliCount` — numero totale articoli\n- `articoli` — array completo articoli (incluso per expand inline senza fetch aggiuntivo)\n- `clienteTelefono` — numero cliccabile per chiamata diretta"
           }
         },
         {
@@ -134,10 +134,10 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"numeroOrdine\": \"ORD-2026-100\",\n  \"dataOrdine\": \"2026-05-24\",\n  \"clienteNome\": \"Giovanni Verdi\",\n  \"clienteIndirizzo\": \"Via Milano 10\",\n  \"clienteCitta\": \"Bergamo\",\n  \"clienteCap\": \"24122\",\n  \"clienteProvincia\": \"BG\",\n  \"clienteTelefono\": \"+39 035 123456\",\n  \"clienteEmail\": \"g.verdi@email.it\",\n  \"clienteNote\": \"Secondo piano senza ascensore\",\n  \"prodottoDescrizione\": \"Poltrona reclinabile RELAX 5000\",\n  \"prodottoCodice\": \"REL-5000-GRI\",\n  \"quantita\": 1,\n  \"prodottoNote\": \"Colore: Grigio\",\n  \"importoDaPagare\": 1490.00,\n  \"modalitaPagamento\": \"Contanti alla consegna\",\n  \"trasportatoreId\": 3,\n  \"noteInterne\": \"Cliente disponibile solo il pomeriggio\"\n}"
+              "raw": "{\n  \"numeroOrdine\": \"ORD-2026-100\",\n  \"dataOrdine\": \"2026-05-24\",\n  \"clienteNome\": \"Giovanni Verdi\",\n  \"clienteIndirizzo\": \"Via Milano 10\",\n  \"clienteCitta\": \"Bergamo\",\n  \"clienteCap\": \"24122\",\n  \"clienteProvincia\": \"BG\",\n  \"clienteTelefono\": \"+39 035 123456\",\n  \"clienteEmail\": \"g.verdi@email.it\",\n  \"clienteNote\": \"Secondo piano senza ascensore\",\n  \"articoli\": [\n    { \"codice\": \"REL-5000-GRI\", \"descrizione\": \"Poltrona reclinabile RELAX 5000 — Grigio, Tessuto\", \"quantita\": 1 },\n    { \"codice\": \"KIT-MONT-01\", \"descrizione\": \"Kit montaggio base\", \"quantita\": 1 }\n  ],\n  \"importoDaPagare\": 1490.00,\n  \"modalitaPagamento\": \"Contanti alla consegna\",\n  \"trasportatoreId\": 3,\n  \"noteInterne\": \"Cliente disponibile solo il pomeriggio\"\n}"
             },
             "url": { "raw": "{{base_url}}/api/consegne", "host": ["{{base_url}}"], "path": ["api","consegne"] },
-            "description": "Crea una nuova consegna. Stato iniziale automatico: `DaPianificare`."
+            "description": "Crea una nuova consegna. Stato iniziale automatico: `DaPianificare`.\n\n> ⚠️ **Backend only** — la dashboard è read-only. Le consegne vengono create dal CRM/backend, non dalla UI della dashboard.\n\n**Campo `articoli`:** array con uno o più articoli. Ogni articolo ha:\n- `codice` (opzionale) — codice prodotto\n- `descrizione` (obbligatorio) — include materiale, colore, dimensioni\n- `quantita` (obbligatorio)"
           }
         },
         {
@@ -248,7 +248,7 @@
                 { "key": "squadraId", "value": "",           "disabled": true }
               ]
             },
-            "description": "Restituisce eventi in formato FullCalendar. Ogni evento ha:\n- `id`, `title`, `start`, `end`, `color`, `textColor`\n- `extendedProps`: tipo, stato, priorita, clienteNome, clienteCitta, squadraNome"
+            "description": "Restituisce eventi in formato FullCalendar. Ogni evento ha:\n- `id`, `title`, `start`, `end`, `color`, `textColor`\n- `extendedProps`: tipo, stato, clienteNome, clienteCitta, squadraNome"
           }
         },
         {
@@ -269,10 +269,10 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"categoria\": \"Lavoro\",\n  \"tipo\": \"Bagno\",\n  \"descrizione\": \"Ristrutturazione bagno principale: sostituzione sanitari e piastrelle\",\n  \"priorita\": \"Alta\",\n  \"clienteNome\": \"Luigi Ferrari\",\n  \"clienteIndirizzo\": \"Via Dante 22\",\n  \"clienteCitta\": \"Milano\",\n  \"clienteCap\": \"20121\",\n  \"clienteProvincia\": \"MI\",\n  \"clienteTelefono\": \"+39 02 1234567\",\n  \"clienteEmail\": \"l.ferrari@email.it\",\n  \"clienteNote\": \"Terzo piano con ascensore\",\n  \"dataInizio\": \"2026-06-10\",\n  \"dataFine\": \"2026-06-12\",\n  \"fasciaDalle\": \"08:00\",\n  \"fasciaAlle\": \"17:00\",\n  \"durataStimataOre\": 24,\n  \"squadraId\": 1,\n  \"notePerSquadra\": \"Portare kit idraulico completo\",\n  \"noteInterne\": \"Cliente preferisce inizio ore 8 precise\"\n}"
+              "raw": "{\n  \"categoria\": \"Lavoro\",\n  \"tipo\": \"Bagno\",\n  \"descrizione\": \"Ristrutturazione bagno principale: sostituzione sanitari e piastrelle\",\n  \"clienteNome\": \"Luigi Ferrari\",\n  \"clienteIndirizzo\": \"Via Dante 22\",\n  \"clienteCitta\": \"Milano\",\n  \"clienteCap\": \"20121\",\n  \"clienteProvincia\": \"MI\",\n  \"clienteTelefono\": \"+39 02 1234567\",\n  \"clienteEmail\": \"l.ferrari@email.it\",\n  \"clienteNote\": \"Terzo piano con ascensore\",\n  \"fasciaDalle\": \"08:00\",\n  \"fasciaAlle\": \"17:00\",\n  \"durataStimataOre\": 24,\n  \"squadraId\": 1,\n  \"notePerSquadra\": \"Portare kit idraulico completo\",\n  \"noteInterne\": \"Cliente preferisce inizio ore 8 precise\"\n}"
             },
             "url": { "raw": "{{base_url}}/api/lavori", "host": ["{{base_url}}"], "path": ["api","lavori"] },
-            "description": "Crea un nuovo lavoro. Stato iniziale: `DaPianificare`.\n\n**Campi categoria:**\n- `categoria`: `Lavoro` (default) | `Assistenza`\n- Per Assistenze usare `turno` invece di fasciaDalle/fasciaAlle libere"
+            "description": "Crea un nuovo lavoro. Stato iniziale: `DaPianificare`.\n\n> ⚠️ **Backend only** — la dashboard è read-only. I lavori vengono creati dal CRM/backend, non dalla UI della dashboard.\n\n**Campi categoria:**\n- `categoria`: `Lavoro` (default) | `Assistenza`\n- Per Assistenze usare `turno` invece di fasciaDalle/fasciaAlle libere\n\n> 📅 `dataInizio` e `dataFine` vengono assegnate automaticamente dal CRM e non sono passate dalla dashboard."
           }
         },
         {
@@ -285,10 +285,10 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"categoria\": \"Assistenza\",\n  \"tipo\": \"Idraulica\",\n  \"descrizione\": \"Assistenza: perdita sotto lavabo – sostituzione sifone\",\n  \"priorita\": \"Alta\",\n  \"clienteNome\": \"Anna Bianchi\",\n  \"clienteIndirizzo\": \"Corso Como 5\",\n  \"clienteCitta\": \"Milano\",\n  \"clienteCap\": \"20154\",\n  \"clienteProvincia\": \"MI\",\n  \"clienteTelefono\": \"+39 02 9876543\",\n  \"dataInizio\": \"2026-06-15\",\n  \"turno\": \"Mattina\",\n  \"fasciaDalle\": \"08:00\",\n  \"fasciaAlle\": \"13:00\",\n  \"durataStimataOre\": 2,\n  \"squadraId\": 1\n}"
+              "raw": "{\n  \"categoria\": \"Assistenza\",\n  \"tipo\": \"Idraulica\",\n  \"descrizione\": \"Assistenza: perdita sotto lavabo – sostituzione sifone\",\n  \"clienteNome\": \"Anna Bianchi\",\n  \"clienteIndirizzo\": \"Corso Como 5\",\n  \"clienteCitta\": \"Milano\",\n  \"clienteCap\": \"20154\",\n  \"clienteProvincia\": \"MI\",\n  \"clienteTelefono\": \"+39 02 9876543\",\n  \"turno\": \"Mattina\",\n  \"fasciaDalle\": \"08:00\",\n  \"fasciaAlle\": \"13:00\",\n  \"durataStimataOre\": 2,\n  \"squadraId\": 1\n}"
             },
             "url": { "raw": "{{base_url}}/api/lavori", "host": ["{{base_url}}"], "path": ["api","lavori"] },
-            "description": "Assistenza con turno specifico.\n\n**Turni:**\n- `Mattina`: 08:00–13:00\n- `Pomeriggio`: 14:00–18:00\n\nMax 1 Assistenza per turno per squadra per giorno."
+            "description": "Assistenza con turno specifico.\n\n> ⚠️ **Backend only** — la dashboard è read-only.\n\n**Turni:**\n- `Mattina`: 08:00–13:00\n- `Pomeriggio`: 14:00–18:00\n\nMax 1 Assistenza per turno per squadra per giorno.\n\n> 📅 La data viene assegnata dal CRM — non includere `dataInizio`/`dataFine` nelle chiamate dalla dashboard."
           }
         },
         {
@@ -301,7 +301,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"tipo\": \"Bagno\",\n  \"descrizione\": \"Descrizione aggiornata\",\n  \"priorita\": \"Urgente\",\n  \"dataInizio\": \"2026-06-11\",\n  \"squadraId\": 1\n}"
+              "raw": "{\n  \"tipo\": \"Bagno\",\n  \"descrizione\": \"Descrizione aggiornata\",\n  \"squadraId\": 1\n}"
             },
             "url": { "raw": "{{base_url}}/api/lavori/1", "host": ["{{base_url}}"], "path": ["api","lavori","1"] }
           }
