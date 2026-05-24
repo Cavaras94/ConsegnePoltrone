@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Plus, Search, Filter, Package,
-  ArrowUpDown, ArrowUp, ArrowDown,
+  ArrowUpDown, ArrowUp, ArrowDown, Clock,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { consegneService } from '../services/consegne.service';
@@ -47,6 +47,7 @@ const STATI_PER_SEZIONE: Record<Sezione, { value: string; label: string }[]> = {
 
 export default function Consegne() {
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   const [cerca,       setCerca]       = useState('');
   const [cercaInput,  setCercaInput]  = useState('');
@@ -223,17 +224,23 @@ export default function Consegne() {
                       </button>
                     </th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Trasportatore</th>
-                    <th className="px-4 py-3" />
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                      <span className="flex items-center gap-1"><Clock size={13} /> Orario</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {righe.map(c => (
-                    <tr key={c.id} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={c.id}
+                      onClick={() => navigate(`/consegne/${c.id}`)}
+                      className="hover:bg-blue-50/40 cursor-pointer transition-colors"
+                    >
                       <td className="px-4 py-3.5">
                         <span className="font-mono text-xs text-gray-500">#{c.numeroOrdine}</span>
                       </td>
                       <td className="px-4 py-3.5">
-                        <p className="font-medium text-gray-900">{c.clienteNome}</p>
+                        <p className="font-semibold text-blue-700">{c.clienteNome}</p>
                         <p className="text-xs text-gray-400">{c.clienteCitta}</p>
                       </td>
                       <td className="px-4 py-3.5">
@@ -257,11 +264,10 @@ export default function Consegne() {
                       <td className="px-4 py-3.5 text-gray-500 text-xs">
                         {c.trasportatoreNome ?? <span className="text-gray-300">—</span>}
                       </td>
-                      <td className="px-4 py-3.5">
-                        <Link to={`/consegne/${c.id}`}
-                          className="text-blue-600 hover:text-blue-700 text-xs font-medium whitespace-nowrap">
-                          Dettaglio →
-                        </Link>
+                      <td className="px-4 py-3.5 text-xs text-gray-500">
+                        {c.fasciaDalle
+                          ? <span className="font-medium">{c.fasciaDalle}{c.fasciaAlle ? ` – ${c.fasciaAlle}` : ''}</span>
+                          : <span className="text-gray-300">—</span>}
                       </td>
                     </tr>
                   ))}

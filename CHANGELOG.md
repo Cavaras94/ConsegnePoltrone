@@ -8,6 +8,18 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.0.0/).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-05-24
+
+### Modificato
+- **Navigazione via click su riga** nelle tabelle desktop di Consegne e Installazioni
+  - Click su qualsiasi punto della riga porta al dettaglio (non più solo "Dettaglio →")
+  - Nome cliente evidenziato in blu (`text-blue-700`) per indicare la cliccabilità
+  - Hover: sfondo blu tenue (`bg-blue-50/40`) al posto del grigio
+  - `cursor-pointer` su tutte le righe cliccabili
+- **Consegne** — colonna "Dettaglio →" sostituita con **Orario** (`fasciaDalle – fasciaAlle`)
+- **Installazioni** — colonna "Dettaglio →" sostituita con **Docs** (conteggio documenti con icona `FileText`)
+- Mobile già ottimizzato: card = `Link` completo, nessuna modifica richiesta
+
 ## [0.2.0] — 2026-05-24
 
 ### Aggiunto
@@ -74,6 +86,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Cavaras94/ConsegnePoltrone/releases/tag/v0.1.0

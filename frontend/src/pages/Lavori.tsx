@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Plus, Search, Filter, Calendar, List, Wrench,
-  ArrowUpDown, ArrowUp, ArrowDown, AlertTriangle,
+  ArrowUpDown, ArrowUp, ArrowDown, AlertTriangle, FileText,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { lavoriService } from '../services/lavori.service';
@@ -34,6 +34,7 @@ function deriveTurno(fasciaDalle?: string | null): 'Mattina' | 'Pomeriggio' {
 
 export default function Lavori() {
   const { isAdmin, isManager } = useAuth();
+  const navigate = useNavigate();
 
   const [cerca,         setCerca]         = useState('');
   const [cercaInput,    setCercaInput]    = useState('');
@@ -246,7 +247,9 @@ export default function Lavori() {
                     </th>
                     <th className="text-left px-4 py-3 font-medium text-gray-500">Stato</th>
                     <th className="text-left px-4 py-3 font-medium text-gray-500">Squadra</th>
-                    <th className="px-4 py-3" />
+                    <th className="text-left px-4 py-3 font-medium text-gray-500">
+                      <span className="flex items-center gap-1"><FileText size={13} /> Docs</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -256,7 +259,11 @@ export default function Lavori() {
                     const hasConflict   = conflictSet.has(l.id);
 
                     return (
-                      <tr key={l.id} className={`hover:bg-gray-50 transition-colors ${isAssistenza ? 'bg-amber-50/40' : ''}`}>
+                      <tr
+                        key={l.id}
+                        onClick={() => navigate(`/lavori/${l.id}`)}
+                        className={`hover:bg-blue-50/40 cursor-pointer transition-colors ${isAssistenza ? 'bg-amber-50/40' : ''}`}
+                      >
                         {/* Installazione */}
                         <td className="px-4 py-3.5">
                           <p className="font-medium text-gray-900 truncate max-w-[200px]">{l.descrizione}</p>
@@ -268,7 +275,7 @@ export default function Lavori() {
 
                         {/* Cliente */}
                         <td className="px-4 py-3.5">
-                          <p className="font-medium text-gray-800">{l.clienteNome}</p>
+                          <p className="font-semibold text-blue-700">{l.clienteNome}</p>
                           <p className="text-xs text-gray-400">{l.clienteCitta}</p>
                         </td>
 
@@ -338,11 +345,16 @@ export default function Lavori() {
                           ) : <span className="text-gray-300 text-xs">—</span>}
                         </td>
 
+                        {/* Documenti */}
                         <td className="px-4 py-3.5">
-                          <Link to={`/lavori/${l.id}`}
-                            className="text-blue-600 hover:text-blue-700 text-xs font-medium whitespace-nowrap">
-                            Dettaglio →
-                          </Link>
+                          {l.documentiCount > 0 ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-600">
+                              <FileText size={13} />
+                              {l.documentiCount}
+                            </span>
+                          ) : (
+                            <span className="text-gray-300 text-xs">—</span>
+                          )}
                         </td>
                       </tr>
                     );
