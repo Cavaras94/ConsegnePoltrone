@@ -1,0 +1,491 @@
+{
+  "info": {
+    "_postman_id": "consegne-poltrone-api-v1",
+    "name": "ConsegnePoltrone API",
+    "description": "Raccolta completa delle API del progetto I Miei Lavori.\n\nBase URL: `{{base_url}}` (default: http://localhost:5000)\n\n## Autenticazione\nTutte le chiamate (tranne login) richiedono il header:\n`Authorization: Bearer {{token}}`\n\nIl token viene impostato automaticamente dalla request di Login.\n\n## Ruoli\n- `Admin` — accesso completo\n- `Manager` — lettura tutto + report\n- `Trasportatore` — solo proprie consegne\n- `Caposquadra` — solo propria squadra",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:5000", "type": "string" },
+    { "key": "token",    "value": "",                      "type": "string" }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": { "type": "text/javascript", "exec": [""] }
+    }
+  ],
+  "item": [
+
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "var json = pm.response.json();",
+                "if (json.token) {",
+                "  pm.collectionVariables.set('token', json.token);",
+                "  console.log('Token salvato:', json.token.substring(0,20) + '...');",
+                "}"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@consegnepoltrone.it\",\n  \"password\": \"Admin@2024!\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api","auth","login"] },
+            "description": "Login e ottenimento JWT. Il token viene salvato automaticamente nella variabile `token` per le chiamate successive.\n\n**Utenti mock disponibili:**\n- admin@consegnepoltrone.it / Admin@2024!\n- admin@test.it / password\n- manager@test.it / password\n- trasportatore@test.it / password\n- caposquadra@test.it / password"
+          }
+        },
+        {
+          "name": "Profilo corrente (me)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/auth/me", "host": ["{{base_url}}"], "path": ["api","auth","me"] },
+            "description": "Restituisce i dati dell'utente autenticato dal token JWT."
+          }
+        },
+        {
+          "name": "Lista utenti [Admin]",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/auth/utenti", "host": ["{{base_url}}"], "path": ["api","auth","utenti"] },
+            "description": "Tutti gli utenti del sistema. Solo Admin."
+          }
+        },
+        {
+          "name": "Crea utente [Admin]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nuovo@test.it\",\n  \"password\": \"Password@2024!\",\n  \"nome\": \"Mario\",\n  \"cognome\": \"Rossi\",\n  \"role\": \"Trasportatore\",\n  \"telefono\": \"+39 333 1234567\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/utenti", "host": ["{{base_url}}"], "path": ["api","auth","utenti"] },
+            "description": "Crea un nuovo utente. Ruoli disponibili: `Admin`, `Manager`, `Trasportatore`, `Caposquadra`."
+          }
+        },
+        {
+          "name": "Lista trasportatori",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/auth/trasportatori", "host": ["{{base_url}}"], "path": ["api","auth","trasportatori"] },
+            "description": "Lista degli utenti con ruolo Trasportatore. Usata nel form pianificazione consegna."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "📦 Consegne",
+      "item": [
+        {
+          "name": "Lista consegne",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/consegne?pagina=1&perPagina=20",
+              "host": ["{{base_url}}"], "path": ["api","consegne"],
+              "query": [
+                { "key": "pagina",    "value": "1" },
+                { "key": "perPagina", "value": "20" },
+                { "key": "stato",     "value": "", "disabled": true, "description": "DaPianificare|Pianificata|InTransito|Consegnata|NonConsegnata|Annullata" },
+                { "key": "cerca",     "value": "", "disabled": true, "description": "Testo libero su cliente, città, ordine" },
+                { "key": "dal",       "value": "", "disabled": true, "description": "Data ISO: 2026-05-01" },
+                { "key": "al",        "value": "", "disabled": true, "description": "Data ISO: 2026-05-31" }
+              ]
+            },
+            "description": "Lista paginata. I Trasportatori vedono solo le proprie consegne.\n\nHeader risposta: `X-Total-Count` con il numero totale.\n\n**Filtri disponibili:**\n- `stato` — filtra per stato\n- `cerca` — ricerca testuale\n- `dal` / `al` — range date\n- `pagina` / `perPagina` — paginazione"
+          }
+        },
+        {
+          "name": "Dettaglio consegna",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/consegne/1", "host": ["{{base_url}}"], "path": ["api","consegne","1"] },
+            "description": "Dettaglio completo della consegna inclusi documenti allegati."
+          }
+        },
+        {
+          "name": "Crea consegna [Admin]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroOrdine\": \"ORD-2026-100\",\n  \"dataOrdine\": \"2026-05-24\",\n  \"clienteNome\": \"Giovanni Verdi\",\n  \"clienteIndirizzo\": \"Via Milano 10\",\n  \"clienteCitta\": \"Bergamo\",\n  \"clienteCap\": \"24122\",\n  \"clienteProvincia\": \"BG\",\n  \"clienteTelefono\": \"+39 035 123456\",\n  \"clienteEmail\": \"g.verdi@email.it\",\n  \"clienteNote\": \"Secondo piano senza ascensore\",\n  \"prodottoDescrizione\": \"Poltrona reclinabile RELAX 5000\",\n  \"prodottoCodice\": \"REL-5000-GRI\",\n  \"quantita\": 1,\n  \"prodottoNote\": \"Colore: Grigio\",\n  \"importoDaPagare\": 1490.00,\n  \"modalitaPagamento\": \"Contanti alla consegna\",\n  \"trasportatoreId\": 3,\n  \"noteInterne\": \"Cliente disponibile solo il pomeriggio\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/consegne", "host": ["{{base_url}}"], "path": ["api","consegne"] },
+            "description": "Crea una nuova consegna. Stato iniziale automatico: `DaPianificare`."
+          }
+        },
+        {
+          "name": "Pianifica consegna",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataPrevistaConsegna\": \"2026-06-05\",\n  \"fasciaDalle\": \"09:00\",\n  \"fasciaAlle\": \"13:00\",\n  \"trasportatoreId\": 3\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/consegne/1/pianifica", "host": ["{{base_url}}"], "path": ["api","consegne","1","pianifica"] },
+            "description": "Imposta data prevista e fascia oraria. Cambia stato in `Pianificata`.\n\nPermessi: Admin, Trasportatore (solo proprie consegne)."
+          }
+        },
+        {
+          "name": "Inserisci esito consegna",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"esito\": \"Consegnata\",\n  \"dataEffettivaConsegna\": \"2026-06-05\",\n  \"noteConsegna\": \"Consegna regolare, cliente soddisfatto\",\n  \"pagamentoRicevuto\": true\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/consegne/1/esito", "host": ["{{base_url}}"], "path": ["api","consegne","1","esito"] },
+            "description": "Registra l'esito della consegna.\n\n**Valori esito:** `Consegnata` | `ClienteAssente` | `Rifiutata` | `Danneggiata` | `Altro`\n\nSe esito = `Consegnata` → stato diventa `Consegnata`, altrimenti `NonConsegnata`."
+          }
+        },
+        {
+          "name": "Upload documento consegna",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file",       "type": "file",  "src": "",            "description": "File PDF o immagine, max 20MB" },
+                { "key": "tipo",       "type": "text",  "value": "BollaFirmata", "description": "BollaDaFirmare|BollaFirmata|Foto|Altro" },
+                { "key": "descrizione","type": "text",  "value": "Bolla firmata dal cliente" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/api/consegne/1/documenti", "host": ["{{base_url}}"], "path": ["api","consegne","1","documenti"] },
+            "description": "Upload file (multipart/form-data). Formati accettati: PDF, JPG, PNG, max 20MB."
+          }
+        },
+        {
+          "name": "Download documento consegna",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/documenti/1/download", "host": ["{{base_url}}"], "path": ["api","documenti","1","download"] },
+            "description": "Scarica il file binario. Restituisce il contenuto con header `Content-Disposition: attachment`."
+          }
+        },
+        {
+          "name": "Elimina documento consegna [Admin]",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/documenti/1", "host": ["{{base_url}}"], "path": ["api","documenti","1"] },
+            "description": "Elimina il documento e il file fisico. Solo Admin. Risposta: 204 No Content."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "🏗️ Installazioni (Lavori)",
+      "item": [
+        {
+          "name": "Lista lavori",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/lavori?pagina=1&perPagina=20",
+              "host": ["{{base_url}}"], "path": ["api","lavori"],
+              "query": [
+                { "key": "pagina",    "value": "1" },
+                { "key": "perPagina", "value": "20" },
+                { "key": "stato",     "value": "", "disabled": true, "description": "DaPianificare|Pianificato|InCorso|Completato|Sospeso|Annullato" },
+                { "key": "tipo",      "value": "", "disabled": true, "description": "Bagno|VascaInDoccia|Clima|Cucina|Pavimenti|Elettrico|Idraulica|Altro" },
+                { "key": "categoria", "value": "", "disabled": true, "description": "Lavoro|Assistenza" },
+                { "key": "squadraId", "value": "", "disabled": true },
+                { "key": "cerca",     "value": "", "disabled": true }
+              ]
+            },
+            "description": "Lista lavori paginata. I Caposquadra vedono solo i lavori della propria squadra.\n\nI campi restituiti per ogni item includono:\n- `categoria`: `Lavoro` | `Assistenza`\n- `fasciaDalle`, `fasciaAlle`: orario inizio/fine\n- `turno`: `Mattina` | `Pomeriggio` (solo Assistenze)\n\n**Regola capacità (validazione lato backend consigliata):**\n- Lavori: max 1 per squadra per giorno\n- Assistenze: max 1 per turno per squadra per giorno"
+          }
+        },
+        {
+          "name": "Calendario lavori",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/lavori/calendario",
+              "host": ["{{base_url}}"], "path": ["api","lavori","calendario"],
+              "query": [
+                { "key": "dal",       "value": "2026-05-01", "disabled": true },
+                { "key": "al",        "value": "2026-05-31", "disabled": true },
+                { "key": "squadraId", "value": "",           "disabled": true }
+              ]
+            },
+            "description": "Restituisce eventi in formato FullCalendar. Ogni evento ha:\n- `id`, `title`, `start`, `end`, `color`, `textColor`\n- `extendedProps`: tipo, stato, priorita, clienteNome, clienteCitta, squadraNome"
+          }
+        },
+        {
+          "name": "Dettaglio lavoro",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/lavori/1", "host": ["{{base_url}}"], "path": ["api","lavori","1"] }
+          }
+        },
+        {
+          "name": "Crea lavoro [Admin]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoria\": \"Lavoro\",\n  \"tipo\": \"Bagno\",\n  \"descrizione\": \"Ristrutturazione bagno principale: sostituzione sanitari e piastrelle\",\n  \"priorita\": \"Alta\",\n  \"clienteNome\": \"Luigi Ferrari\",\n  \"clienteIndirizzo\": \"Via Dante 22\",\n  \"clienteCitta\": \"Milano\",\n  \"clienteCap\": \"20121\",\n  \"clienteProvincia\": \"MI\",\n  \"clienteTelefono\": \"+39 02 1234567\",\n  \"clienteEmail\": \"l.ferrari@email.it\",\n  \"clienteNote\": \"Terzo piano con ascensore\",\n  \"dataInizio\": \"2026-06-10\",\n  \"dataFine\": \"2026-06-12\",\n  \"fasciaDalle\": \"08:00\",\n  \"fasciaAlle\": \"17:00\",\n  \"durataStimataOre\": 24,\n  \"squadraId\": 1,\n  \"notePerSquadra\": \"Portare kit idraulico completo\",\n  \"noteInterne\": \"Cliente preferisce inizio ore 8 precise\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/lavori", "host": ["{{base_url}}"], "path": ["api","lavori"] },
+            "description": "Crea un nuovo lavoro. Stato iniziale: `DaPianificare`.\n\n**Campi categoria:**\n- `categoria`: `Lavoro` (default) | `Assistenza`\n- Per Assistenze usare `turno` invece di fasciaDalle/fasciaAlle libere"
+          }
+        },
+        {
+          "name": "Crea assistenza [Admin]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoria\": \"Assistenza\",\n  \"tipo\": \"Idraulica\",\n  \"descrizione\": \"Assistenza: perdita sotto lavabo – sostituzione sifone\",\n  \"priorita\": \"Alta\",\n  \"clienteNome\": \"Anna Bianchi\",\n  \"clienteIndirizzo\": \"Corso Como 5\",\n  \"clienteCitta\": \"Milano\",\n  \"clienteCap\": \"20154\",\n  \"clienteProvincia\": \"MI\",\n  \"clienteTelefono\": \"+39 02 9876543\",\n  \"dataInizio\": \"2026-06-15\",\n  \"turno\": \"Mattina\",\n  \"fasciaDalle\": \"08:00\",\n  \"fasciaAlle\": \"13:00\",\n  \"durataStimataOre\": 2,\n  \"squadraId\": 1\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/lavori", "host": ["{{base_url}}"], "path": ["api","lavori"] },
+            "description": "Assistenza con turno specifico.\n\n**Turni:**\n- `Mattina`: 08:00–13:00\n- `Pomeriggio`: 14:00–18:00\n\nMax 1 Assistenza per turno per squadra per giorno."
+          }
+        },
+        {
+          "name": "Modifica lavoro [Admin]",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"Bagno\",\n  \"descrizione\": \"Descrizione aggiornata\",\n  \"priorita\": \"Urgente\",\n  \"dataInizio\": \"2026-06-11\",\n  \"squadraId\": 1\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/lavori/1", "host": ["{{base_url}}"], "path": ["api","lavori","1"] }
+          }
+        },
+        {
+          "name": "Aggiorna stato lavoro",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stato\": \"InCorso\",\n  \"notePerSquadra\": \"Iniziare dal bagno principale, materiali già in cantiere\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/lavori/1/stato", "host": ["{{base_url}}"], "path": ["api","lavori","1","stato"] },
+            "description": "**Stati disponibili:** `DaPianificare` → `Pianificato` → `InCorso` → `Completato` | `Sospeso` | `Annullato`\n\nPermessi: Admin, Caposquadra (solo propria squadra)."
+          }
+        },
+        {
+          "name": "Inserisci esito lavoro",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"esito\": \"Completato\",\n  \"noteEsito\": \"Lavoro completato nei tempi previsti, cliente molto soddisfatto\",\n  \"dataCompletamento\": \"2026-06-12\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/lavori/1/esito", "host": ["{{base_url}}"], "path": ["api","lavori","1","esito"] },
+            "description": "**Valori esito:** `Completato` | `ParzialmenteCompletato` | `ProblemiRiscontrati` | `ClienteAssente` | `Annullato`\n\nCambia automaticamente stato in `Completato`."
+          }
+        },
+        {
+          "name": "Upload documento lavoro",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file",       "type": "file", "src": "",              "description": "PDF o immagine, max 25MB" },
+                { "key": "tipo",       "type": "text", "value": "RapportinoFirmato", "description": "Preventivo|ContrattoFirmato|SchedaTecnica|FotoPrima|FotoDopo|RapportinoFirmato|Altro" },
+                { "key": "descrizione","type": "text", "value": "Rapportino firmato dal cliente" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/api/lavori/1/documenti", "host": ["{{base_url}}"], "path": ["api","lavori","1","documenti"] }
+          }
+        },
+        {
+          "name": "Download documento lavoro",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/lavori/1/documenti/1/download", "host": ["{{base_url}}"], "path": ["api","lavori","1","documenti","1","download"] }
+          }
+        },
+        {
+          "name": "Elimina documento lavoro [Admin]",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/lavori/1/documenti/1", "host": ["{{base_url}}"], "path": ["api","lavori","1","documenti","1"] },
+            "description": "Risposta: 204 No Content."
+          }
+        },
+        {
+          "name": "Elimina lavoro [Admin]",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/lavori/1", "host": ["{{base_url}}"], "path": ["api","lavori","1"] },
+            "description": "Elimina il lavoro e tutti i documenti allegati. Risposta: 204 No Content."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "👥 Squadre",
+      "item": [
+        {
+          "name": "Lista squadre",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/squadre?soloAttive=true",
+              "host": ["{{base_url}}"], "path": ["api","squadre"],
+              "query": [{ "key": "soloAttive", "value": "true", "description": "true = solo squadre attive" }]
+            }
+          }
+        },
+        {
+          "name": "Utenti disponibili per squadra",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/squadre/utenti-disponibili", "host": ["{{base_url}}"], "path": ["api","squadre","utenti-disponibili"] },
+            "description": "Trasportatori e Caposquadra non ancora assegnati a nessuna squadra."
+          }
+        },
+        {
+          "name": "Dettaglio squadra",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/squadre/1", "host": ["{{base_url}}"], "path": ["api","squadre","1"] },
+            "description": "Include la lista completa dei membri con info di contatto."
+          }
+        },
+        {
+          "name": "Crea squadra [Admin]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Squadra Idraulica Sud\",\n  \"descrizione\": \"Specializzata in impianti idraulici e risanamento bagni\",\n  \"colore\": \"#8b5cf6\",\n  \"specializzazioni\": \"Idraulica,Bagno\",\n  \"caposquadraId\": 5,\n  \"membroIds\": [5, 8]\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/squadre", "host": ["{{base_url}}"], "path": ["api","squadre"] },
+            "description": "Crea una nuova squadra. `colore` in formato esadecimale (#rrggbb). `membroIds` include tutti i membri incluso il caposquadra."
+          }
+        },
+        {
+          "name": "Modifica squadra [Admin]",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Squadra Bagni Nord (aggiornata)\",\n  \"colore\": \"#1d4ed8\",\n  \"specializzazioni\": \"Bagno,VascaInDoccia,Idraulica\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/squadre/1", "host": ["{{base_url}}"], "path": ["api","squadre","1"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "📊 Report",
+      "item": [
+        {
+          "name": "Statistiche globali",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/report/statistiche", "host": ["{{base_url}}"], "path": ["api","report","statistiche"] },
+            "description": "KPI: totale consegne, per stato, importi totali/riscossi/da riscuotere, consegne oggi e questo mese.\n\nPermessi: Admin, Manager."
+          }
+        },
+        {
+          "name": "Trend mensile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/report/mensile?mesi=6",
+              "host": ["{{base_url}}"], "path": ["api","report","mensile"],
+              "query": [{ "key": "mesi", "value": "6", "description": "Numero mesi da includere" }]
+            },
+            "description": "Andamento mensile: totale, consegnate, non consegnate per ogni mese. Usato nei grafici."
+          }
+        },
+        {
+          "name": "Performance trasportatori",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/report/trasportatori", "host": ["{{base_url}}"], "path": ["api","report","trasportatori"] },
+            "description": "Per ogni trasportatore: totale consegne, riuscite, fallite, percentuale successo."
+          }
+        }
+      ]
+    }
+
+  ]
+}
