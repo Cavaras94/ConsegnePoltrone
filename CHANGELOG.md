@@ -8,6 +8,12 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.0.0/).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-05-24
+
+### Rimosso
+- **Priorità installazioni** — campo rimosso da lista, dettaglio e form di creazione
+- **Campi data nel form "Nuova installazione"** — data inizio/fine arrivano dal CRM e non sono inseribili manualmente dalla dashboard; la sezione "Pianificazione" è diventata solo "Fascia oraria" con nota esplicativa
+
 ## [0.3.0] — 2026-05-24
 
 ### Modificato
@@ -86,7 +92,8 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Cavaras94/ConsegnePoltrone/releases/tag/v0.1.0

@@ -11,8 +11,8 @@ import { it } from 'date-fns/locale';
 import { useDropzone } from 'react-dropzone';
 import { useAuth } from '../contexts/AuthContext';
 import { lavoriService } from '../services/lavori.service';
-import { StatoLavoroBadge, PrioritaBadge, TIPO_LABELS, CategoriaBadge } from '../components/ui/LavoroBadges';
-import type { StatoLavoro, PrioritaLavoro, TipoLavoro, TipoDocumentoLavoro, EsitoLavoro } from '../types';
+import { StatoLavoroBadge, TIPO_LABELS, CategoriaBadge } from '../components/ui/LavoroBadges';
+import type { StatoLavoro, TipoLavoro, TipoDocumentoLavoro, EsitoLavoro } from '../types';
 
 const STATI_LAVORO: StatoLavoro[] = ['DaPianificare', 'Pianificato', 'InCorso', 'Completato', 'Sospeso', 'Annullato'];
 const STATI_LABELS: Record<StatoLavoro, string> = {
@@ -77,7 +77,6 @@ export default function LavoroDetail() {
               {TIPO_LABELS[lavoro.tipo as TipoLavoro]} — {lavoro.descrizione}
             </h1>
             <StatoLavoroBadge stato={lavoro.stato as StatoLavoro} />
-            <PrioritaBadge priorita={lavoro.priorita as PrioritaLavoro} />
           </div>
           <p className="text-sm text-gray-500 mt-0.5">
             #{lavoro.numeroLavoro} •{' '}

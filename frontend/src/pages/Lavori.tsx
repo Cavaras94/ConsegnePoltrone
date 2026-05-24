@@ -8,10 +8,10 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { lavoriService } from '../services/lavori.service';
 import { squadreService } from '../services/squadre.service';
-import { StatoLavoroBadge, PrioritaBadge, TIPO_LABELS, CategoriaBadge } from '../components/ui/LavoroBadges';
+import { StatoLavoroBadge, TIPO_LABELS, CategoriaBadge } from '../components/ui/LavoroBadges';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
-import type { LavoroList, StatoLavoro, PrioritaLavoro, TipoLavoro } from '../types';
+import type { LavoroList, StatoLavoro, TipoLavoro } from '../types';
 
 type Categoria = 'tutte' | 'Lavoro' | 'Assistenza';
 type SortDir = 'asc' | 'desc' | null;
@@ -324,12 +324,9 @@ export default function Lavori() {
                           ) : <span className="text-gray-300">—</span>}
                         </td>
 
-                        {/* Stato + Priorità */}
+                        {/* Stato */}
                         <td className="px-4 py-3.5">
-                          <div className="flex flex-col gap-1">
-                            <StatoLavoroBadge stato={l.stato as StatoLavoro} />
-                            <PrioritaBadge priorita={l.priorita as PrioritaLavoro} />
-                          </div>
+                          <StatoLavoroBadge stato={l.stato as StatoLavoro} />
                         </td>
 
                         {/* Squadra */}

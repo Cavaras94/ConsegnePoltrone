@@ -17,7 +17,6 @@ const schema = z.object({
   categoria:       z.enum(['Lavoro', 'Assistenza']).default('Lavoro'),
   tipo:            z.enum(['Bagno', 'VascaInDoccia', 'Clima', 'Cucina', 'Pavimenti', 'Elettrico', 'Idraulica', 'Altro']),
   descrizione:     z.string().min(1, 'Obbligatorio'),
-  priorita:        z.enum(['Bassa', 'Media', 'Alta', 'Urgente']).default('Media'),
   clienteNome:     z.string().min(1, 'Obbligatorio'),
   clienteIndirizzo: z.string().min(1, 'Obbligatorio'),
   clienteCitta:    z.string().min(1, 'Obbligatorio'),
@@ -26,8 +25,6 @@ const schema = z.object({
   clienteTelefono: z.string().optional(),
   clienteEmail:    z.string().email('Email non valida').optional().or(z.literal('')),
   clienteNote:     z.string().optional(),
-  dataInizio:      z.string().optional(),
-  dataFine:        z.string().optional(),
   turno:           z.enum(['Mattina', 'Pomeriggio']).optional(),
   fasciaDalle:     z.string().optional(),
   fasciaAlle:      z.string().optional(),
@@ -61,7 +58,6 @@ export default function NuovoLavoro() {
         categoria:       d.categoria,
         tipo:            d.tipo,
         descrizione:     d.descrizione,
-        priorita:        d.priorita,
         clienteNome:     d.clienteNome,
         clienteIndirizzo: d.clienteIndirizzo,
         clienteCitta:    d.clienteCitta,
@@ -70,8 +66,6 @@ export default function NuovoLavoro() {
         clienteTelefono: d.clienteTelefono || undefined,
         clienteEmail:    d.clienteEmail    || undefined,
         clienteNote:     d.clienteNote     || undefined,
-        dataInizio:      d.dataInizio      || undefined,
-        dataFine:        d.dataFine        || undefined,
         turno:           isAssistenza ? d.turno : undefined,
         fasciaDalle,
         fasciaAlle,
@@ -89,12 +83,11 @@ export default function NuovoLavoro() {
 
   const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<FormData>({
     resolver: zodResolver(schema) as any,
-    defaultValues: { categoria: 'Lavoro', tipo: 'Bagno', priorita: 'Media' },
+    defaultValues: { categoria: 'Lavoro', tipo: 'Bagno' },
   });
 
   const categoriaWatch = watch('categoria');
   const turnoWatch     = watch('turno');
-  const dataInizio     = watch('dataInizio');
 
   const isAssistenza = categoriaWatch === 'Assistenza';
 
@@ -151,26 +144,15 @@ export default function NuovoLavoro() {
             ))}
           </div>
 
-          {/* Tipo specifico + Priorità */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo intervento *</label>
-              <select {...register('tipo')} className={inp(!!errors.tipo) + ' bg-white'}>
-                {TIPO_OPTIONS.map(o => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-              {errors.tipo && <p className="text-xs text-red-500 mt-1">{errors.tipo.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Priorità *</label>
-              <select {...register('priorita')} className={inp(false) + ' bg-white'}>
-                <option value="Bassa">Bassa</option>
-                <option value="Media">Media</option>
-                <option value="Alta">Alta</option>
-                <option value="Urgente">Urgente</option>
-              </select>
-            </div>
+          {/* Tipo specifico */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo intervento *</label>
+            <select {...register('tipo')} className={inp(!!errors.tipo) + ' bg-white'}>
+              {TIPO_OPTIONS.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            {errors.tipo && <p className="text-xs text-red-500 mt-1">{errors.tipo.message}</p>}
           </div>
 
           <div className="mt-4">
@@ -236,23 +218,12 @@ export default function NuovoLavoro() {
           </div>
         </section>
 
-        {/* ── Pianificazione ── */}
+        {/* ── Fascia oraria ── */}
         <section className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Pianificazione</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Data inizio</label>
-              <input {...register('dataInizio')} type="date" className={inp(false)} />
-            </div>
-            {!isAssistenza && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Data fine</label>
-                <input {...register('dataFine')} type="date" min={dataInizio} className={inp(false)} />
-              </div>
-            )}
-          </div>
+          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Fascia oraria</h2>
+          <p className="text-xs text-gray-400 mb-4">La data viene assegnata automaticamente dal CRM.</p>
 
-          {/* Fascia oraria: turno per assistenze, libera per lavori */}
+          {/* Turno per assistenze, orario libero per lavori */}
           {isAssistenza ? (
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Turno *</label>
