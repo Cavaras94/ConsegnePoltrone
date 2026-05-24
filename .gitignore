@@ -1,0 +1,65 @@
+# ──────────────────────────────────────────────────────────
+# .NET / C# Backend
+# ──────────────────────────────────────────────────────────
+bin/
+obj/
+*.user
+*.suo
+*.sdf
+*.opendb
+*.userosscache
+*.sln.docstates
+.vs/
+*.rsuser
+.idea/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Secrets & config locali (NON committare credenziali!)
+ConsegnePoltrone/appsettings.Development.json
+ConsegnePoltrone/uploads/
+
+# ──────────────────────────────────────────────────────────
+# Node.js / React Frontend
+# ──────────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/*.local
+
+# Build cache
+frontend/.vite/
+frontend/.cache/
+
+# Coverage
+frontend/coverage/
+
+# ──────────────────────────────────────────────────────────
+# Claude AI (file di sessione locale)
+# ──────────────────────────────────────────────────────────
+.claude/
+
+# ──────────────────────────────────────────────────────────
+# Sistema operativo
+# ──────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.lnk
+
+# ──────────────────────────────────────────────────────────
+# Editor
+# ──────────────────────────────────────────────────────────
+*.swp
+*.swo
+*~
+.vscode/settings.json
+.vscode/launch.json
