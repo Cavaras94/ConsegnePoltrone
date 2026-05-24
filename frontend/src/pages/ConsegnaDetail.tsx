@@ -13,7 +13,7 @@ import { StatoBadge, EsitoBadge } from '../components/ui/StatoBadge';
 import DocumentPreview from '../components/ui/DocumentPreview';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
-import type { EsitoConsegna, StatoConsegna, TipoDocumento, Documento } from '../types';
+import type { EsitoConsegna, StatoConsegna, TipoDocumento, Documento, ArticoloConsegna } from '../types';
 import { useDropzone } from 'react-dropzone';
 
 const ESITI: EsitoConsegna[] = ['Consegnata', 'ClienteAssente', 'Rifiutata', 'Danneggiata', 'Altro'];
@@ -104,12 +104,31 @@ export default function ConsegnaDetail() {
             {consegna.clienteNote && <InfoRow label="Note cliente" value={consegna.clienteNote} />}
           </Section>
 
-          {/* Prodotto */}
-          <Section title="Prodotto" icon={<Package size={16} className="text-green-500" />}>
-            <InfoRow label="Descrizione" value={consegna.prodottoDescrizione} />
-            {consegna.prodottoCodice && <InfoRow label="Codice" value={consegna.prodottoCodice} />}
-            <InfoRow label="Quantità" value={consegna.quantita} />
-            {consegna.prodottoNote && <InfoRow label="Note prodotto" value={consegna.prodottoNote} />}
+          {/* Articoli */}
+          <Section
+            title={`Articoli (${consegna.articoli?.length ?? 0})`}
+            icon={<Package size={16} className="text-green-500" />}
+          >
+            {!consegna.articoli || consegna.articoli.length === 0 ? (
+              <p className="text-sm text-gray-400 py-1">Nessun articolo</p>
+            ) : (
+              <div className="divide-y divide-gray-100 -mx-1">
+                {consegna.articoli.map((art: ArticoloConsegna, idx: number) => (
+                  <div key={art.id} className="flex items-start gap-3 px-1 py-2.5">
+                    <span className="text-xs text-gray-400 w-5 flex-shrink-0 pt-0.5 font-mono">{idx + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-800 font-medium leading-snug">{art.descrizione}</p>
+                      {art.codice && (
+                        <p className="text-xs text-gray-400 font-mono mt-0.5">{art.codice}</p>
+                      )}
+                    </div>
+                    <span className="text-xs font-semibold text-gray-600 flex-shrink-0 mt-0.5 bg-gray-100 px-2 py-0.5 rounded-full">
+                      ×{art.quantita}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </Section>
 
           {/* Documenti */}

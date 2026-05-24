@@ -1,11 +1,17 @@
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-react';
 import { consegneService } from '../services/consegne.service';
 import { authService } from '../services/auth.service';
+
+const articoloSchema = z.object({
+  codice:     z.string().optional(),
+  descrizione: z.string().min(1, 'Descrizione obbligatoria'),
+  quantita:   z.coerce.number().min(1),
+});
 
 const schema = z.object({
   numeroOrdine: z.string().min(1, 'Obbligatorio'),
@@ -18,10 +24,7 @@ const schema = z.object({
   clienteTelefono: z.string().optional(),
   clienteEmail: z.string().email('Email non valida').optional().or(z.literal('')),
   clienteNote: z.string().optional(),
-  prodottoDescrizione: z.string().min(1, 'Obbligatorio'),
-  prodottoCodice: z.string().optional(),
-  quantita: z.coerce.number().min(1),
-  prodottoNote: z.string().optional(),
+  articoli: z.array(articoloSchema).min(1, 'Aggiungi almeno un articolo'),
   importoDaPagare: z.coerce.number().min(0),
   modalitaPagamento: z.string().optional(),
   trasportatoreId: z.coerce.number().optional(),
@@ -41,14 +44,17 @@ export default function NuovaConsegna() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } = useForm<FormData>({ resolver: zodResolver(schema) as any, defaultValues: {
       dataOrdine: new Date().toISOString().split('T')[0],
-      quantita: 1,
+      articoli: [{ codice: '', descrizione: '', quantita: 1 }],
       importoDaPagare: 0,
     },
   });
+
+  const { fields, append, remove } = useFieldArray({ control, name: 'articoli' });
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: (data: FormData) => consegneService.creaConsegna({
@@ -56,6 +62,11 @@ export default function NuovaConsegna() {
       dataOrdine: data.dataOrdine + 'T00:00:00Z',
       clienteEmail: data.clienteEmail || undefined,
       trasportatoreId: data.trasportatoreId || undefined,
+      articoli: data.articoli.map(a => ({
+        codice: a.codice || undefined,
+        descrizione: a.descrizione,
+        quantita: Number(a.quantita),
+      })),
     }),
     onSuccess: (consegna) => navigate(`/consegne/${consegna.id}`),
   });
@@ -120,22 +131,58 @@ export default function NuovaConsegna() {
           </Field>
         </FormSection>
 
-        {/* Prodotto */}
-        <FormSection title="Prodotto">
-          <Field label="Descrizione *" error={errors.prodottoDescrizione?.message}>
-            <input {...register('prodottoDescrizione')} className={inputClass(!!errors.prodottoDescrizione)} placeholder="Poltrona reclinabile mod. X" />
-          </Field>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Codice prodotto">
-              <input {...register('prodottoCodice')} className={inputClass(false)} placeholder="POL-001" />
-            </Field>
-            <Field label="Quantità *" error={errors.quantita?.message}>
-              <input {...register('quantita')} type="number" min={1} className={inputClass(!!errors.quantita)} />
-            </Field>
+        {/* Articoli */}
+        <FormSection title="Articoli">
+          <div className="space-y-3">
+            {fields.map((field, idx) => (
+              <div key={field.id} className="flex gap-2 items-start p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <span className="text-xs text-gray-400 font-mono mt-3 w-5 flex-shrink-0">{idx + 1}</span>
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-[1fr_120px_60px] gap-2">
+                  <div>
+                    <input
+                      {...register(`articoli.${idx}.descrizione`)}
+                      placeholder="Descrizione articolo *"
+                      className={inputClass(!!errors.articoli?.[idx]?.descrizione)}
+                    />
+                    {errors.articoli?.[idx]?.descrizione && (
+                      <p className="mt-1 text-xs text-red-500">{errors.articoli[idx]?.descrizione?.message}</p>
+                    )}
+                  </div>
+                  <input
+                    {...register(`articoli.${idx}.codice`)}
+                    placeholder="Codice (opz.)"
+                    className={inputClass(false)}
+                  />
+                  <input
+                    {...register(`articoli.${idx}.quantita`)}
+                    type="number" min={1}
+                    placeholder="Qtà"
+                    className={inputClass(false)}
+                  />
+                </div>
+                {fields.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => remove(idx)}
+                    className="mt-2 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0"
+                    title="Rimuovi articolo"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
-          <Field label="Note prodotto">
-            <textarea {...register('prodottoNote')} rows={2} className={inputClass(false) + ' resize-none'} placeholder="Dimensioni, peso, fragilità..." />
-          </Field>
+          {errors.articoli?.root?.message && (
+            <p className="text-xs text-red-500">{errors.articoli.root.message}</p>
+          )}
+          <button
+            type="button"
+            onClick={() => append({ codice: '', descrizione: '', quantita: 1 })}
+            className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium mt-2"
+          >
+            <Plus size={14} /> Aggiungi articolo
+          </button>
         </FormSection>
 
         {/* Pagamento */}

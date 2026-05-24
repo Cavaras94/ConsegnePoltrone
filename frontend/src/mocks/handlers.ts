@@ -163,30 +163,40 @@ const consegneHandlers = [
       items = items.filter(c =>
         c.clienteNome.toLowerCase().includes(cerca) ||
         c.clienteCitta.toLowerCase().includes(cerca) ||
-        c.prodottoDescrizione.toLowerCase().includes(cerca) ||
-        c.numeroOrdine.toLowerCase().includes(cerca)
+        c.numeroOrdine.toLowerCase().includes(cerca) ||
+        (c.articoli ?? []).some((a: any) =>
+          a.descrizione.toLowerCase().includes(cerca) ||
+          (a.codice ?? '').toLowerCase().includes(cerca)
+        )
       );
     }
 
     const { data, total } = paginate(items, page, size);
     // Return list-shaped objects
-    const listItems = data.map(c => ({
-      id: c.id, numeroOrdine: c.numeroOrdine, dataOrdine: c.dataOrdine,
-      clienteNome: c.clienteNome, clienteCitta: c.clienteCitta,
-      prodottoDescrizione: c.prodottoDescrizione,
-      prodottoCodice: c.prodottoCodice ?? null,
-      quantita: c.quantita ?? 1,
-      prodottoNote: c.prodottoNote ?? null,
-      importoDaPagare: c.importoDaPagare,
-      pagamentoRicevuto: c.pagamentoRicevuto,
-      modalitaPagamento: c.modalitaPagamento ?? null,
-      fasciaDalle: c.fasciaDalle ?? null,
-      fasciaAlle: c.fasciaAlle ?? null,
-      stato: c.stato,
-      dataPrevistaConsegna: c.dataPrevistaConsegna,
-      esito: c.esito,
-      trasportatoreNome: c.trasportatoreNome, documentiCount: c.documentiCount,
-    }));
+    const listItems = data.map(c => {
+      const articoli: any[] = c.articoli ?? [];
+      const articoliCount = articoli.length;
+      const articoliSommario = articoliCount === 0
+        ? '—'
+        : articoliCount === 1
+          ? articoli[0].descrizione
+          : `${articoli[0].descrizione} + altri ${articoliCount - 1}`;
+      return {
+        id: c.id, numeroOrdine: c.numeroOrdine, dataOrdine: c.dataOrdine,
+        clienteNome: c.clienteNome, clienteCitta: c.clienteCitta,
+        articoliSommario,
+        articoliCount,
+        importoDaPagare: c.importoDaPagare,
+        pagamentoRicevuto: c.pagamentoRicevuto,
+        modalitaPagamento: c.modalitaPagamento ?? null,
+        fasciaDalle: c.fasciaDalle ?? null,
+        fasciaAlle: c.fasciaAlle ?? null,
+        stato: c.stato,
+        dataPrevistaConsegna: c.dataPrevistaConsegna,
+        esito: c.esito,
+        trasportatoreNome: c.trasportatoreNome, documentiCount: c.documentiCount,
+      };
+    });
 
     return HttpResponse.json(listItems, {
       headers: {

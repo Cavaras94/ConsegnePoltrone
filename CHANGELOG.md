@@ -8,6 +8,17 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.0.0/).
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-05-24
+
+### Aggiunto
+- **Multi-articolo per consegna** — ogni consegna ora supporta N articoli, ciascuno con codice, descrizione e quantità
+  - Tipo `ArticoloConsegna` aggiunto ai tipi TypeScript
+  - Dettaglio consegna: sezione "Articoli" con lista numerata (codice · descrizione · ×qtà)
+  - Form "Nuova consegna": sezione "Articoli" dinamica con aggiunta/rimozione righe (`useFieldArray`)
+  - Lista consegne: colonna "Articoli" mostra il primo articolo e "+altri N" se multipli
+  - Ricerca full-text estesa a codici e descrizioni degli articoli
+  - Mock data aggiornati con articoli realistici (1–3 articoli per consegna)
+
 ## [0.4.0] — 2026-05-24
 
 ### Rimosso
@@ -92,7 +103,8 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.1.0...v0.2.0

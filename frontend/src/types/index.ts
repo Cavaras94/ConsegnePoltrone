@@ -52,16 +52,21 @@ export interface Documento {
   descrizione?: string;
 }
 
+export interface ArticoloConsegna {
+  id: number;
+  codice?: string;
+  descrizione: string;
+  quantita: number;
+}
+
 export interface ConsegnaList {
   id: number;
   numeroOrdine: string;
   dataOrdine: string;
   clienteNome: string;
   clienteCitta: string;
-  prodottoDescrizione: string;
-  prodottoCodice?: string;
-  quantita: number;
-  prodottoNote?: string;
+  articoliSommario: string;  // Descrizione primo articolo o "N articoli"
+  articoliCount: number;
   importoDaPagare: number;
   pagamentoRicevuto: boolean;
   modalitaPagamento?: string;
@@ -81,12 +86,7 @@ export interface Consegna extends ConsegnaList {
   clienteTelefono?: string;
   clienteEmail?: string;
   clienteNote?: string;
-  prodottoCodice?: string;
-  quantita: number;
-  prodottoNote?: string;
-  modalitaPagamento?: string;
-  fasciaDalle?: string;
-  fasciaAlle?: string;
+  articoli: ArticoloConsegna[];
   dataEffettivaConsegna?: string;
   noteConsegna?: string;
   noteInterne?: string;
@@ -107,10 +107,7 @@ export interface CreateConsegnaForm {
   clienteTelefono?: string;
   clienteEmail?: string;
   clienteNote?: string;
-  prodottoDescrizione: string;
-  prodottoCodice?: string;
-  quantita: number;
-  prodottoNote?: string;
+  articoli: { codice?: string; descrizione: string; quantita: number }[];
   importoDaPagare: number;
   modalitaPagamento?: string;
   trasportatoreId?: number;

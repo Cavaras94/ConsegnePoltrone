@@ -210,7 +210,7 @@ export default function Consegne() {
                   <tr className="bg-gray-50 border-b border-gray-100">
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Ordine</th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Cliente</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">Prodotto</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Articoli</th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Da ritirare</th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Stato</th>
                     {/* Sortable date header */}
@@ -244,8 +244,10 @@ export default function Consegne() {
                         <p className="text-xs text-gray-400">{c.clienteCitta}</p>
                       </td>
                       <td className="px-4 py-3.5">
-                        <p className="text-gray-700 truncate max-w-[180px]">{c.prodottoDescrizione}</p>
-                        {c.quantita > 1 && <p className="text-xs text-gray-400">Qtà {c.quantita}</p>}
+                        <p className="text-gray-700 truncate max-w-[200px]">{c.articoliSommario}</p>
+                        {c.articoliCount > 1 && (
+                          <p className="text-xs text-gray-400">{c.articoliCount} articoli</p>
+                        )}
                       </td>
                       <td className="px-4 py-3.5">
                         <p className="font-medium">€ {c.importoDaPagare.toFixed(2)}</p>
@@ -287,7 +289,10 @@ export default function Consegne() {
                     </div>
                     <StatoBadge stato={c.stato as StatoConsegna} />
                   </div>
-                  <p className="text-sm text-gray-600 truncate">{c.prodottoDescrizione}</p>
+                  <p className="text-sm text-gray-600 truncate">{c.articoliSommario}</p>
+                  {c.articoliCount > 1 && (
+                    <p className="text-xs text-gray-400">{c.articoliCount} articoli</p>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-gray-800">€ {c.importoDaPagare.toFixed(2)}</span>
                     <div className="flex items-center gap-2">
