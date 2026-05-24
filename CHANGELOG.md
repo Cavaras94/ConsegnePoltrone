@@ -8,6 +8,23 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.0.0/).
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-05-24
+
+### Aggiunto
+- **Expand inline articoli** nella lista consegne (desktop e mobile)
+  - Chevron `▶ / ▼` in testa a ogni riga: cliccarlo espande gli articoli senza navigare
+  - Riga espansa mostra numero · descrizione · codice · ×quantità
+  - Su mobile: bottone "N art." affiancato alla descrizione sommario
+  - Click sul resto della riga continua a navigare al dettaglio
+- **Colonna Telefono** con numero cliccabile (`tel:`) — sostituisce "Trasportatore"
+  - Desktop: colonna dedicata, click sul numero non propaga al navigate riga
+  - Mobile: telefono visibile nella card con icona `Phone`
+- `clienteTelefono` esposto nel mapping lista (handler MSW)
+- `articoli` inclusi nella risposta lista per l'expand senza fetch aggiuntivi
+
+### Rimosso
+- Colonna "Trasportatore" dalla tabella consegne (informazione secondaria)
+
 ## [0.6.0] — 2026-05-24
 
 ### Rimosso
@@ -119,7 +136,8 @@ Se i dati mock non sono visibili: fare **Ctrl+Shift+R** (hard refresh) per forza
 
 ---
 
-[Unreleased]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Cavaras94/ConsegnePoltrone/compare/v0.3.0...v0.4.0

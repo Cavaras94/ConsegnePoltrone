@@ -184,8 +184,10 @@ const consegneHandlers = [
       return {
         id: c.id, numeroOrdine: c.numeroOrdine, dataOrdine: c.dataOrdine,
         clienteNome: c.clienteNome, clienteCitta: c.clienteCitta,
+        clienteTelefono: c.clienteTelefono ?? null,
         articoliSommario,
         articoliCount,
+        articoli,  // inclusi per expand inline
         importoDaPagare: c.importoDaPagare,
         pagamentoRicevuto: c.pagamentoRicevuto,
         modalitaPagamento: c.modalitaPagamento ?? null,

@@ -65,8 +65,10 @@ export interface ConsegnaList {
   dataOrdine: string;
   clienteNome: string;
   clienteCitta: string;
+  clienteTelefono?: string;
   articoliSommario: string;  // Descrizione primo articolo o "N articoli"
   articoliCount: number;
+  articoli?: ArticoloConsegna[];  // Inclusi nella lista per l'expand inline
   importoDaPagare: number;
   pagamentoRicevuto: boolean;
   modalitaPagamento?: string;

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Search, Filter, Package,
   ArrowUpDown, ArrowUp, ArrowDown, Clock,
+  ChevronDown, ChevronRight, Phone,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { consegneService } from '../services/consegne.service';
@@ -46,7 +47,7 @@ const STATI_PER_SEZIONE: Record<Sezione, { value: string; label: string }[]> = {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function Consegne() {
-  useAuth(); // mantiene il contesto ma non serve isAdmin
+  useAuth();
   const navigate = useNavigate();
 
   const [cerca,       setCerca]       = useState('');
@@ -54,6 +55,12 @@ export default function Consegne() {
   const [sezione,     setSezione]     = useState<Sezione>('tutte');
   const [statoFiltro, setStatoFiltro] = useState('');
   const [sortDir,     setSortDir]     = useState<SortDir>(null);
+  const [expandedId,  setExpandedId]  = useState<number | null>(null);
+
+  const toggleExpand = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    setExpandedId(prev => prev === id ? null : id);
+  };
 
   // Fetch everything – filtering and sorting happen client-side
   const { data, isLoading } = useQuery({
@@ -198,12 +205,12 @@ export default function Consegne() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100">
+                    <th className="w-8 px-2 py-3" />
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Ordine</th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Cliente</th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Articoli</th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Da ritirare</th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Stato</th>
-                    {/* Sortable date header */}
                     <th className="text-left px-4 py-3 font-medium text-gray-600">
                       <button
                         onClick={cycleSort}
@@ -213,89 +220,190 @@ export default function Consegne() {
                         <SortIcon size={13} className={sortColor} />
                       </button>
                     </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">Trasportatore</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                      <span className="flex items-center gap-1"><Phone size={13} /> Telefono</span>
+                    </th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">
                       <span className="flex items-center gap-1"><Clock size={13} /> Orario</span>
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {righe.map(c => (
-                    <tr
-                      key={c.id}
-                      onClick={() => navigate(`/consegne/${c.id}`)}
-                      className="hover:bg-blue-50/40 cursor-pointer transition-colors"
-                    >
-                      <td className="px-4 py-3.5">
-                        <span className="font-mono text-xs text-gray-500">#{c.numeroOrdine}</span>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <p className="font-semibold text-blue-700">{c.clienteNome}</p>
-                        <p className="text-xs text-gray-400">{c.clienteCitta}</p>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <p className="text-gray-700 truncate max-w-[200px]">{c.articoliSommario}</p>
-                        {c.articoliCount > 1 && (
-                          <p className="text-xs text-gray-400">{c.articoliCount} articoli</p>
+                <tbody>
+                  {righe.map(c => {
+                    const isExpanded = expandedId === c.id;
+                    return (
+                      <>
+                        <tr
+                          key={c.id}
+                          onClick={() => navigate(`/consegne/${c.id}`)}
+                          className={`cursor-pointer transition-colors border-b border-gray-50 ${
+                            isExpanded ? 'bg-blue-50/60' : 'hover:bg-blue-50/40'
+                          }`}
+                        >
+                          {/* Expand chevron */}
+                          <td className="pl-3 pr-1 py-3.5">
+                            <button
+                              onClick={e => toggleExpand(e, c.id)}
+                              className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
+                              title={isExpanded ? 'Chiudi' : 'Vedi articoli'}
+                            >
+                              {isExpanded
+                                ? <ChevronDown size={14} />
+                                : <ChevronRight size={14} />}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <span className="font-mono text-xs text-gray-500">#{c.numeroOrdine}</span>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <p className="font-semibold text-blue-700">{c.clienteNome}</p>
+                            <p className="text-xs text-gray-400">{c.clienteCitta}</p>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <p className="text-gray-700 truncate max-w-[200px]">{c.articoliSommario}</p>
+                            {c.articoliCount > 1 && (
+                              <p className="text-xs text-gray-400">{c.articoliCount} articoli</p>
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <p className="font-medium">€ {c.importoDaPagare.toFixed(2)}</p>
+                            {c.pagamentoRicevuto && (
+                              <span className="text-xs text-green-600 font-medium">✓ Ritirato</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <StatoBadge stato={c.stato as StatoConsegna} />
+                          </td>
+                          <td className="px-4 py-3.5 text-gray-500 text-xs">
+                            {c.dataPrevistaConsegna
+                              ? format(new Date(c.dataPrevistaConsegna), 'dd/MM/yyyy')
+                              : <span className="text-gray-300">—</span>}
+                          </td>
+                          <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
+                            {c.clienteTelefono
+                              ? <a
+                                  href={`tel:${c.clienteTelefono}`}
+                                  className="flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium text-xs whitespace-nowrap"
+                                >
+                                  <Phone size={12} />{c.clienteTelefono}
+                                </a>
+                              : <span className="text-gray-300 text-xs">—</span>}
+                          </td>
+                          <td className="px-4 py-3.5 text-xs text-gray-500">
+                            {c.fasciaDalle
+                              ? <span className="font-medium">{c.fasciaDalle}{c.fasciaAlle ? ` – ${c.fasciaAlle}` : ''}</span>
+                              : <span className="text-gray-300">—</span>}
+                          </td>
+                        </tr>
+
+                        {/* Riga espansa — lista articoli */}
+                        {isExpanded && (
+                          <tr key={`${c.id}-exp`} className="bg-blue-50/30 border-b border-blue-100">
+                            <td />
+                            <td colSpan={8} className="px-4 pb-4 pt-2">
+                              <div className="border-l-2 border-blue-200 pl-4">
+                                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">
+                                  Articoli ordine
+                                </p>
+                                {(c.articoli ?? []).length === 0 ? (
+                                  <p className="text-xs text-gray-400">Nessun articolo</p>
+                                ) : (
+                                  <div className="space-y-1.5">
+                                    {(c.articoli ?? []).map((art, idx) => (
+                                      <div key={art.id ?? idx} className="flex items-center gap-3">
+                                        <span className="text-xs text-gray-400 font-mono w-4 flex-shrink-0">{idx + 1}</span>
+                                        <div className="flex-1 min-w-0">
+                                          <span className="text-sm text-gray-800">{art.descrizione}</span>
+                                          {art.codice && (
+                                            <span className="ml-2 text-xs text-gray-400 font-mono">{art.codice}</span>
+                                          )}
+                                        </div>
+                                        <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full flex-shrink-0">
+                                          ×{art.quantita}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
                         )}
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <p className="font-medium">€ {c.importoDaPagare.toFixed(2)}</p>
-                        {c.pagamentoRicevuto && (
-                          <span className="text-xs text-green-600 font-medium">✓ Ritirato</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <StatoBadge stato={c.stato as StatoConsegna} />
-                      </td>
-                      <td className="px-4 py-3.5 text-gray-500 text-xs">
-                        {c.dataPrevistaConsegna
-                          ? format(new Date(c.dataPrevistaConsegna), 'dd/MM/yyyy')
-                          : <span className="text-gray-300">—</span>}
-                      </td>
-                      <td className="px-4 py-3.5 text-gray-500 text-xs">
-                        {c.trasportatoreNome ?? <span className="text-gray-300">—</span>}
-                      </td>
-                      <td className="px-4 py-3.5 text-xs text-gray-500">
-                        {c.fasciaDalle
-                          ? <span className="font-medium">{c.fasciaDalle}{c.fasciaAlle ? ` – ${c.fasciaAlle}` : ''}</span>
-                          : <span className="text-gray-300">—</span>}
-                      </td>
-                    </tr>
-                  ))}
+                      </>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile cards */}
             <div className="md:hidden divide-y divide-gray-100">
-              {righe.map(c => (
-                <Link key={c.id} to={`/consegne/${c.id}`}
-                  className="flex flex-col gap-2 p-4 hover:bg-gray-50 active:bg-gray-100">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-semibold text-gray-900">{c.clienteNome}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{c.clienteCitta} · #{c.numeroOrdine}</p>
-                    </div>
-                    <StatoBadge stato={c.stato as StatoConsegna} />
+              {righe.map(c => {
+                const isExpanded = expandedId === c.id;
+                return (
+                  <div key={c.id} className="flex flex-col">
+                    <Link to={`/consegne/${c.id}`}
+                      className="flex flex-col gap-2 p-4 hover:bg-gray-50 active:bg-gray-100">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-900">{c.clienteNome}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{c.clienteCitta} · #{c.numeroOrdine}</p>
+                        </div>
+                        <StatoBadge stato={c.stato as StatoConsegna} />
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm text-gray-600 truncate flex-1">{c.articoliSommario}</p>
+                        {/* Expand button */}
+                        <button
+                          onClick={e => toggleExpand(e, c.id)}
+                          className="flex-shrink-0 flex items-center gap-1 text-xs text-blue-600 font-medium px-2 py-1 rounded-lg bg-blue-50 hover:bg-blue-100"
+                        >
+                          {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                          {c.articoliCount} art.
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-800">€ {c.importoDaPagare.toFixed(2)}</span>
+                        <div className="flex items-center gap-3">
+                          {c.pagamentoRicevuto && <span className="text-xs text-green-600 font-medium">✓ Ritirato</span>}
+                          {/* Telefono cliccabile */}
+                          {c.clienteTelefono && (
+                            <a
+                              href={`tel:${c.clienteTelefono}`}
+                              onClick={e => e.stopPropagation()}
+                              className="flex items-center gap-1 text-blue-600 text-xs font-semibold"
+                            >
+                              <Phone size={12} />{c.clienteTelefono}
+                            </a>
+                          )}
+                          {c.dataPrevistaConsegna && (
+                            <span className="text-xs text-gray-400">
+                              {format(new Date(c.dataPrevistaConsegna), 'dd/MM/yyyy')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                    {/* Expanded articoli su mobile */}
+                    {isExpanded && (
+                      <div className="px-4 pb-4 bg-blue-50/30 border-t border-blue-100">
+                        <div className="border-l-2 border-blue-200 pl-3 pt-3 space-y-1.5">
+                          {(c.articoli ?? []).map((art, idx) => (
+                            <div key={art.id ?? idx} className="flex items-start gap-2">
+                              <span className="text-xs text-gray-400 font-mono w-4 flex-shrink-0">{idx + 1}</span>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-xs text-gray-800">{art.descrizione}</span>
+                                {art.codice && <span className="ml-1 text-xs text-gray-400 font-mono">{art.codice}</span>}
+                              </div>
+                              <span className="text-xs text-gray-500 font-semibold flex-shrink-0">×{art.quantita}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-600 truncate">{c.articoliSommario}</p>
-                  {c.articoliCount > 1 && (
-                    <p className="text-xs text-gray-400">{c.articoliCount} articoli</p>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-gray-800">€ {c.importoDaPagare.toFixed(2)}</span>
-                    <div className="flex items-center gap-2">
-                      {c.pagamentoRicevuto && <span className="text-xs text-green-600 font-medium">✓ Ritirato</span>}
-                      {c.dataPrevistaConsegna && (
-                        <span className="text-xs text-gray-400">
-                          {format(new Date(c.dataPrevistaConsegna), 'dd/MM/yyyy')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                );
+              })}
             </div>
           </>
         )}
