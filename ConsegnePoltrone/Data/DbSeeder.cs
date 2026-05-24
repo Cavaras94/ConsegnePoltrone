@@ -6,14 +6,20 @@ namespace ConsegnePoltrone.Data;
 
 public static class DbSeeder
 {
-    public static async Task SeedAsync(ApplicationDbContext db)
+    public static async Task SeedAsync(ApplicationDbContext db, IConfiguration configuration)
     {
         await db.Database.MigrateAsync();
 
-        // Crea admin di default se non esiste
         if (!await db.Users.AnyAsync())
         {
-            var adminPassword = "Admin@2024!"; // Cambiare in produzione!
+            // La password NON è hardcodata: deve essere impostata tramite
+            // variabile d'ambiente o appsettings.Production.json
+            // Variabile d'ambiente: Seeder__AdminPassword=<password>
+            var adminPassword = configuration["Seeder:AdminPassword"]
+                ?? throw new InvalidOperationException(
+                    "Seeder:AdminPassword non configurata. " +
+                    "Impostare la variabile d'ambiente Seeder__AdminPassword prima di avviare.");
+
             db.Users.Add(new User
             {
                 Email = "admin@consegnepoltrone.it",
@@ -25,8 +31,7 @@ public static class DbSeeder
             });
 
             await db.SaveChangesAsync();
-            Console.WriteLine("✅ Utente admin creato: admin@consegnepoltrone.it / Admin@2024!");
-            Console.WriteLine("⚠️  Cambia la password al primo accesso!");
+            Console.WriteLine("✅ Utente admin creato: admin@consegnepoltrone.it");
         }
     }
 }

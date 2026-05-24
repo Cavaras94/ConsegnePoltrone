@@ -1,0 +1,23 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost,1433;Database=ConsegnePoltrone;User Id=cp_user;Password=<PASSWORD_DB>;TrustServerCertificate=True;"
+  },
+  "Jwt": {
+    "Secret": "<STRINGA_RANDOM_MIN_32_CARATTERI>",
+    "Issuer": "ConsegnePoltrone",
+    "Audience": "ConsegnePoltrone",
+    "ExpiryHours": "12"
+  },
+  "Seeder": {
+    "AdminPassword": "<PASSWORD_ADMIN_INIZIALE>"
+  },
+  "Cors": {
+    "AllowedOrigins": [
+      "https://tuodominio.it"
+    ]
+  },
+  "FileStorage": {
+    "UploadPath": "/var/data/consegnepoltrone/uploads"
+  },
+  "AllowedHosts": "tuodominio.it"
+}

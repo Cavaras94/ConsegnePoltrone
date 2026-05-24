@@ -344,6 +344,9 @@ public class LavoriController(ApplicationDbContext db, FileService fileService) 
         if (!tipiConsentiti.Contains(file.ContentType.ToLower()))
             return BadRequest(new { message = "Tipo file non consentito. Accettati: PDF, JPEG, PNG" });
 
+        if (!FileService.IsFileSignatureValid(file))
+            return BadRequest(new { message = "Il contenuto del file non corrisponde al tipo dichiarato." });
+
         if (file.Length > 25 * 1024 * 1024)
             return BadRequest(new { message = "File troppo grande. Massimo 25 MB" });
 

@@ -66,10 +66,13 @@ public class DocumentiController(ApplicationDbContext db, FileService fileServic
         if (CurrentRole == Roles.Trasportatore && consegna.TrasportatoreId != CurrentUserId)
             return Forbid();
 
-        // Validazione tipo file
+        // Validazione tipo file — prima il Content-Type dichiarato, poi i magic bytes reali
         var tipiConsentiti = new[] { "application/pdf", "image/jpeg", "image/png", "image/webp" };
         if (!tipiConsentiti.Contains(file.ContentType.ToLower()))
             return BadRequest(new { message = "Tipo file non consentito. Sono accettati: PDF, JPEG, PNG" });
+
+        if (!FileService.IsFileSignatureValid(file))
+            return BadRequest(new { message = "Il contenuto del file non corrisponde al tipo dichiarato." });
 
         if (file.Length > 20 * 1024 * 1024) // 20 MB max
             return BadRequest(new { message = "File troppo grande. Massimo 20 MB" });

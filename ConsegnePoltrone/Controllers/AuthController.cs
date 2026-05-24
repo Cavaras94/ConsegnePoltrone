@@ -5,6 +5,7 @@ using ConsegnePoltrone.Models;
 using ConsegnePoltrone.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
@@ -15,6 +16,7 @@ namespace ConsegnePoltrone.Controllers;
 public class AuthController(ApplicationDbContext db, JwtService jwtService) : ControllerBase
 {
     [HttpPost("login")]
+    [EnableRateLimiting("auth-login")]  // max 10 tentativi/minuto per IP
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
     {
         var user = await db.Users
