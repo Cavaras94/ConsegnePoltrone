@@ -54,7 +54,7 @@ export default function Consegne() {
 
   const [cerca,       setCerca]       = useState('');
   const [cercaInput,  setCercaInput]  = useState('');
-  const [sezione,     setSezione]     = useState<Sezione>('tutte');
+  const [sezione,     setSezione]     = useState<Sezione>('da_fare');
   const [statoFiltro, setStatoFiltro] = useState('');
   const [sortKey,     setSortKey]     = useState<SortKey>('data');
   const [sortDir,     setSortDir]     = useState<SortDir>(null);

@@ -13,18 +13,30 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import type { LavoroList, StatoLavoro, TipoLavoro } from '../types';
 
-type Categoria = 'tutte' | 'Lavoro' | 'Assistenza';
+type Sezione = 'da_fare' | 'tutti';
 type SortDir = 'asc' | 'desc' | null;
 
-const STATI_LAVORO = [
-  { value: '', label: 'Tutti gli stati' },
-  { value: 'DaPianificare', label: 'Da pianificare' },
-  { value: 'Pianificato',   label: 'Pianificato' },
-  { value: 'InCorso',       label: 'In corso' },
-  { value: 'Completato',    label: 'Completato' },
-  { value: 'Sospeso',       label: 'Sospeso' },
-  { value: 'Annullato',     label: 'Annullato' },
-];
+// Stati considerati "da fare" (non ancora conclusi)
+const STATI_DA_FARE: StatoLavoro[] = ['DaPianificare', 'Pianificato', 'InCorso', 'Sospeso'];
+
+const STATI_PER_SEZIONE: Record<Sezione, { value: string; label: string }[]> = {
+  da_fare: [
+    { value: '', label: 'Tutti gli stati' },
+    { value: 'DaPianificare', label: 'Da pianificare' },
+    { value: 'Pianificato',   label: 'Pianificato' },
+    { value: 'InCorso',       label: 'In corso' },
+    { value: 'Sospeso',       label: 'Sospeso' },
+  ],
+  tutti: [
+    { value: '', label: 'Tutti gli stati' },
+    { value: 'DaPianificare', label: 'Da pianificare' },
+    { value: 'Pianificato',   label: 'Pianificato' },
+    { value: 'InCorso',       label: 'In corso' },
+    { value: 'Completato',    label: 'Completato' },
+    { value: 'Sospeso',       label: 'Sospeso' },
+    { value: 'Annullato',     label: 'Annullato' },
+  ],
+};
 
 /** Deriva il turno dall'orario di inizio (fallback se turno non è esplicito) */
 function deriveTurno(fasciaDalle?: string | null): 'Mattina' | 'Pomeriggio' {
@@ -40,7 +52,7 @@ export default function Lavori() {
   const [cercaInput,    setCercaInput]    = useState('');
   const [stato,         setStato]         = useState('');
   const [filtroSquadra, setFiltroSquadra] = useState<number | undefined>();
-  const [categoria,     setCategoria]     = useState<Categoria>('tutte');
+  const [sezione,       setSezione]       = useState<Sezione>('da_fare');
   const [sortDir,       setSortDir]       = useState<SortDir>(null);
 
   const { data: squadre } = useQuery({
@@ -60,8 +72,7 @@ export default function Lavori() {
   const all = data?.data ?? [];
 
   // ── Conteggi per toggle ──
-  const cntLavori     = useMemo(() => all.filter(l => l.categoria === 'Lavoro').length,     [all]);
-  const cntAssistenze = useMemo(() => all.filter(l => l.categoria === 'Assistenza').length, [all]);
+  const cntDaFare = useMemo(() => all.filter(l => (STATI_DA_FARE as string[]).includes(l.stato)).length, [all]);
 
   // ── Rilevamento conflitti di capacità (su tutti i dati) ──
   // Lavori: max 1 per squadra per giorno
@@ -92,10 +103,10 @@ export default function Lavori() {
     return ids;
   }, [all]);
 
-  // ── Righe visibili: categoria → sort ──
+  // ── Righe visibili: sezione → sort ──
   const righe = useMemo<LavoroList[]>(() => {
     let items = all;
-    if (categoria !== 'tutte') items = items.filter(l => l.categoria === categoria);
+    if (sezione === 'da_fare') items = items.filter(l => (STATI_DA_FARE as string[]).includes(l.stato));
     if (!sortDir) return items;
     return [...items].sort((a, b) => {
       const da = a.dataInizio ?? '';
@@ -105,8 +116,9 @@ export default function Lavori() {
       if (!db) return -1;
       return sortDir === 'asc' ? da.localeCompare(db) : db.localeCompare(da);
     });
-  }, [all, categoria, sortDir]);
+  }, [all, sezione, sortDir]);
 
+  const changeSezione = (s: Sezione) => { setSezione(s); setStato(''); };
   const handleSearch = (e: React.FormEvent) => { e.preventDefault(); setCerca(cercaInput); };
   const cycleSort = () => setSortDir(d => d === null ? 'asc' : d === 'asc' ? 'desc' : null);
 
@@ -129,24 +141,22 @@ export default function Lavori() {
         </Link>
       </div>
 
-      {/* Toggle categoria */}
+      {/* Toggle sezione */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-4">
         {([
-          { key: 'tutte',      label: 'Tutti',      cnt: all.length    },
-          { key: 'Lavoro',     label: 'Lavori',     cnt: cntLavori     },
-          { key: 'Assistenza', label: 'Assistenze', cnt: cntAssistenze },
-        ] as { key: Categoria; label: string; cnt: number }[]).map(({ key, label, cnt }) => (
+          { key: 'da_fare', label: 'Da fare', cnt: cntDaFare   },
+          { key: 'tutti',   label: 'Tutti',   cnt: all.length  },
+        ] as { key: Sezione; label: string; cnt: number }[]).map(({ key, label, cnt }) => (
           <button
             key={key}
-            onClick={() => setCategoria(key)}
+            onClick={() => changeSezione(key)}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all ${
-              categoria === key ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+              sezione === key ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            <span className="hidden sm:inline">{label}</span>
-            <span className="sm:hidden text-xs">{label}</span>
+            <span>{label}</span>
             <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
-              categoria === key ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-500'
+              sezione === key ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-500'
             }`}>{cnt}</span>
           </button>
         ))}
@@ -171,7 +181,7 @@ export default function Lavori() {
             onChange={e => setStato(e.target.value)}
             className="flex-1 min-w-[140px] border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
           >
-            {STATI_LAVORO.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+            {STATI_PER_SEZIONE[sezione].map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
 
           {(isAdmin || isManager) && squadre && (
