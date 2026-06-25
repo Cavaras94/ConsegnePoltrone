@@ -50,6 +50,7 @@ export interface Documento {
   dataUpload: string;
   uploadedByNome: string;
   descrizione?: string;
+  url: string;  // Unico riferimento al file: il frontend legge solo questo
 }
 
 export interface ArticoloConsegna {
@@ -222,6 +223,7 @@ export interface DocumentoLavoro {
   dataUpload: string;
   uploadedByNome: string;
   descrizione?: string;
+  url: string;  // Unico riferimento al file: il frontend legge solo questo
 }
 
 export interface LavoroList {

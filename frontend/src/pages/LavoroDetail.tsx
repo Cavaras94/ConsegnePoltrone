@@ -6,6 +6,7 @@ import {
   Upload, Download, Trash2, CheckCircle, Loader2, AlertCircle, Info, Wrench, Eye, Navigation
 } from 'lucide-react';
 import DocumentPreview from '../components/ui/DocumentPreview';
+import { fetchBlob, downloadBlob } from '../services/api';
 import { useToast } from '../components/ui/Toast';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -45,7 +46,7 @@ export default function LavoroDetail() {
   const [showStato, setShowStato] = useState(false);
   const [showEsito, setShowEsito] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
-  const [previewDoc, setPreviewDoc] = useState<{ id: number; nomeFileOriginale: string; contentType: string } | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<{ nomeFileOriginale: string; contentType: string; url: string } | null>(null);
 
   const { data: lavoro, isLoading } = useQuery({
     queryKey: ['lavoro', lavoroId],
@@ -152,7 +153,7 @@ export default function LavoroDetail() {
               <p className="text-sm text-gray-400 py-2">Nessun documento</p>
             ) : (
               <div className="space-y-2">
-                {lavoro.documenti.map((doc: { id: number; nomeFileOriginale: string; contentType: string; tipo: string; dataUpload: string; uploadedByNome: string }) => (
+                {lavoro.documenti.map((doc: { id: number; nomeFileOriginale: string; contentType: string; tipo: string; dataUpload: string; uploadedByNome: string; url: string }) => (
                   <div key={doc.id} className="group flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <span className="text-lg flex-shrink-0">{TIPI_DOC_LABELS[doc.tipo as TipoDocumentoLavoro]?.split(' ')[0]}</span>
                     <div className="flex-1 min-w-0">
@@ -166,14 +167,14 @@ export default function LavoroDetail() {
                     {/* Always visible on mobile, hover-reveal on desktop */}
                     <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
                       <button
-                        onClick={() => setPreviewDoc({ id: doc.id, nomeFileOriginale: doc.nomeFileOriginale, contentType: doc.contentType })}
+                        onClick={() => setPreviewDoc({ nomeFileOriginale: doc.nomeFileOriginale, contentType: doc.contentType, url: doc.url })}
                         className="p-2 rounded-lg hover:bg-blue-100 text-gray-400 hover:text-blue-600 active:bg-blue-100"
                         title="Anteprima"
                       >
                         <Eye size={15} />
                       </button>
                       <button
-                        onClick={() => lavoriService.downloadDocumento(lavoroId, doc.id, doc.nomeFileOriginale)}
+                        onClick={() => downloadBlob(doc.url, doc.nomeFileOriginale)}
                         className="p-2 rounded-lg hover:bg-gray-200 text-gray-400 hover:text-gray-600 active:bg-gray-200"
                         title="Scarica"
                       >
@@ -295,10 +296,10 @@ export default function LavoroDetail() {
         <DocumentPreview
           nome={previewDoc.nomeFileOriginale}
           contentType={previewDoc.contentType}
-          fetchBlob={() => lavoriService.getBlobDocumento(lavoroId, previewDoc.id)}
+          fetchBlob={() => fetchBlob(previewDoc.url)}
           onClose={() => setPreviewDoc(null)}
           onDownload={() => {
-            lavoriService.downloadDocumento(lavoroId, previewDoc.id, previewDoc.nomeFileOriginale);
+            downloadBlob(previewDoc.url, previewDoc.nomeFileOriginale);
             setPreviewDoc(null);
           }}
         />

@@ -45,7 +45,8 @@ public class DocumentiController(ApplicationDbContext db, FileService fileServic
                 Tipo = d.Tipo.ToString(),
                 DataUpload = d.DataUpload,
                 UploadedByNome = $"{d.UploadedBy.Nome} {d.UploadedBy.Cognome}",
-                Descrizione = d.Descrizione
+                Descrizione = d.Descrizione,
+                Url = $"/documenti/{d.Id}/download"
             })
             .ToListAsync();
 
@@ -81,7 +82,7 @@ public class DocumentiController(ApplicationDbContext db, FileService fileServic
             tipoDoc = TipoDocumento.Altro;
 
         var (nomeFileSalvato, pathFile, contentType, dimensione) =
-            await fileService.SalvaFileAsync(file, consegnaId);
+            await fileService.SalvaFileAsync(file, "consegne", consegnaId);
 
         var documento = new Documento
         {
@@ -112,7 +113,8 @@ public class DocumentiController(ApplicationDbContext db, FileService fileServic
                 Tipo = documento.Tipo.ToString(),
                 DataUpload = documento.DataUpload,
                 UploadedByNome = $"{documento.UploadedBy.Nome} {documento.UploadedBy.Cognome}",
-                Descrizione = documento.Descrizione
+                Descrizione = documento.Descrizione,
+                Url = $"/documenti/{documento.Id}/download"
             });
     }
 
@@ -163,9 +165,7 @@ public class DocumentiDownloadController(ApplicationDbContext db, FileService fi
         if (!fileService.FileEsiste(documento.PathFile))
             return NotFound(new { message = "File non trovato sul server" });
 
-        var pathCompleto = fileService.GetPathCompleto(documento.PathFile);
-        var bytes = await System.IO.File.ReadAllBytesAsync(pathCompleto);
-
-        return File(bytes, documento.ContentType, documento.NomeFileOriginale);
+        var stream = fileService.OpenRead(documento.PathFile);
+        return File(stream, documento.ContentType, documento.NomeFileOriginale, enableRangeProcessing: true);
     }
 }

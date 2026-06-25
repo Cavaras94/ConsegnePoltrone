@@ -353,26 +353,15 @@ public class LavoriController(ApplicationDbContext db, FileService fileService) 
         if (!Enum.TryParse<TipoDocumentoLavoro>(tipo, out var tipoDoc))
             tipoDoc = TipoDocumentoLavoro.Altro;
 
-        // Riusa il FileService con una sub-cartella diversa
-        var cartella = Path.Combine(
-            fileService.GetPathCompleto(string.Empty).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
-            "lavori", id.ToString());
-        Directory.CreateDirectory(cartella);
-
-        var estensione = Path.GetExtension(file.FileName);
-        var nomeFileSalvato = $"{Guid.NewGuid()}{estensione}";
-        var pathRelativo = Path.Combine("lavori", id.ToString(), nomeFileSalvato);
-        var pathCompleto = Path.Combine(cartella, nomeFileSalvato);
-
-        using (var stream = new FileStream(pathCompleto, FileMode.Create))
-            await file.CopyToAsync(stream);
+        var (nomeFileSalvato, pathAssoluto, _, _) =
+            await fileService.SalvaFileAsync(file, "lavori", id);
 
         var documento = new DocumentoLavoro
         {
             LavoroId = id,
             NomeFileOriginale = file.FileName,
             NomeFileSalvato = nomeFileSalvato,
-            PathFile = pathRelativo,
+            PathFile = pathAssoluto,
             ContentType = file.ContentType,
             DimensioneBytes = file.Length,
             Tipo = tipoDoc,
@@ -394,7 +383,8 @@ public class LavoriController(ApplicationDbContext db, FileService fileService) 
             Tipo = documento.Tipo.ToString(),
             DataUpload = documento.DataUpload,
             UploadedByNome = $"{documento.UploadedBy.Nome} {documento.UploadedBy.Cognome}",
-            Descrizione = documento.Descrizione
+            Descrizione = documento.Descrizione,
+            Url = $"/lavori/{documento.LavoroId}/documenti/{documento.Id}/download"
         });
     }
 
@@ -417,8 +407,8 @@ public class LavoriController(ApplicationDbContext db, FileService fileService) 
         if (!fileService.FileEsiste(doc.PathFile))
             return NotFound(new { message = "File non trovato sul server" });
 
-        var bytes = await System.IO.File.ReadAllBytesAsync(fileService.GetPathCompleto(doc.PathFile));
-        return File(bytes, doc.ContentType, doc.NomeFileOriginale);
+        var stream = fileService.OpenRead(doc.PathFile);
+        return File(stream, doc.ContentType, doc.NomeFileOriginale, enableRangeProcessing: true);
     }
 
     // DELETE /api/lavori/{id}/documenti/{docId} — Admin
@@ -498,7 +488,8 @@ public class LavoriController(ApplicationDbContext db, FileService fileService) 
             Tipo = d.Tipo.ToString(),
             DataUpload = d.DataUpload,
             UploadedByNome = $"{d.UploadedBy.Nome} {d.UploadedBy.Cognome}",
-            Descrizione = d.Descrizione
+            Descrizione = d.Descrizione,
+            Url = $"/lavori/{d.LavoroId}/documenti/{d.Id}/download"
         }).ToList()
     };
 }

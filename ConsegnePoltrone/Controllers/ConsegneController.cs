@@ -298,7 +298,8 @@ public class ConsegneController(ApplicationDbContext db) : ControllerBase
             Tipo = d.Tipo.ToString(),
             DataUpload = d.DataUpload,
             UploadedByNome = $"{d.UploadedBy.Nome} {d.UploadedBy.Cognome}",
-            Descrizione = d.Descrizione
+            Descrizione = d.Descrizione,
+            Url = $"/documenti/{d.Id}/download"
         }).ToList()
     };
 }

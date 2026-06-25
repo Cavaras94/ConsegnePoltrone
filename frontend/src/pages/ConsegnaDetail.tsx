@@ -11,6 +11,7 @@ import { consegneService } from '../services/consegne.service';
 import { documentiService } from '../services/documenti.service';
 import { StatoBadge, EsitoBadge } from '../components/ui/StatoBadge';
 import DocumentPreview from '../components/ui/DocumentPreview';
+import { fetchBlob, downloadBlob } from '../services/api';
 import { useToast } from '../components/ui/Toast';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -159,7 +160,7 @@ export default function ConsegnaDetail() {
                     doc={doc}
                     tipoLabel={TIPO_LABELS[doc.tipo as TipoDocumento]}
                     onPreview={() => setPreviewDoc(doc)}
-                    onDownload={() => documentiService.download(doc.id, doc.nomeFileOriginale)}
+                    onDownload={() => downloadBlob(doc.url, doc.nomeFileOriginale)}
                     onDelete={isAdmin ? () => invalidate() : undefined}
                     consegnaId={consegnaId}
                   />
@@ -272,8 +273,8 @@ export default function ConsegnaDetail() {
         <DocumentPreview
           nome={previewDoc.nomeFileOriginale}
           contentType={previewDoc.contentType}
-          fetchBlob={() => documentiService.getBlob(previewDoc.id)}
-          onDownload={() => documentiService.download(previewDoc.id, previewDoc.nomeFileOriginale)}
+          fetchBlob={() => fetchBlob(previewDoc.url)}
+          onDownload={() => downloadBlob(previewDoc.url, previewDoc.nomeFileOriginale)}
           onClose={() => setPreviewDoc(null)}
         />
       )}

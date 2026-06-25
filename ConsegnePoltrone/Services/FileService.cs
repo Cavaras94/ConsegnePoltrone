@@ -5,35 +5,46 @@ public class FileService(IConfiguration configuration, IWebHostEnvironment env)
     private readonly string _uploadPath = configuration["FileStorage:UploadPath"]
         ?? Path.Combine(env.ContentRootPath, "uploads");
 
-    public async Task<(string nomeFileSalvato, string pathFile, string contentType, long dimensione)>
-        SalvaFileAsync(IFormFile file, int consegnaId)
+    /// <summary>
+    /// Salva il file nella landing area locale e restituisce il <b>path assoluto</b>.
+    /// Il path assoluto è la source of truth memorizzata su <c>PathFile</c>:
+    /// quando il servizio di archiviazione sposta il file su S3, riscrive
+    /// semplicemente questa stringa con il nuovo path assoluto (raggiungibile via SMB).
+    /// </summary>
+    public async Task<(string nomeFileSalvato, string pathAssoluto, string contentType, long dimensione)>
+        SalvaFileAsync(IFormFile file, string categoria, int entityId)
     {
-        var cartella = Path.Combine(_uploadPath, "consegne", consegnaId.ToString());
+        var cartella = Path.GetFullPath(Path.Combine(_uploadPath, categoria, entityId.ToString()));
         Directory.CreateDirectory(cartella);
 
-        var estensione = Path.GetExtension(file.FileName);
-        var nomeFileSalvato = $"{Guid.NewGuid()}{estensione}";
-        var pathCompleto = Path.Combine(cartella, nomeFileSalvato);
-        var pathRelativo = Path.Combine("consegne", consegnaId.ToString(), nomeFileSalvato);
+        var nomeFileSalvato = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+        var pathAssoluto = Path.Combine(cartella, nomeFileSalvato);
 
-        using var stream = new FileStream(pathCompleto, FileMode.Create);
+        using var stream = new FileStream(pathAssoluto, FileMode.Create);
         await file.CopyToAsync(stream);
 
-        return (nomeFileSalvato, pathRelativo, file.ContentType, file.Length);
+        return (nomeFileSalvato, pathAssoluto, file.ContentType, file.Length);
     }
 
-    public string GetPathCompleto(string pathRelativo)
-        => Path.Combine(_uploadPath, pathRelativo);
+    /// <summary>
+    /// Risolve il path memorizzato. I nuovi documenti usano path assoluti
+    /// (restituiti così come sono); eventuali path relativi legacy vengono
+    /// risolti rispetto alla landing area locale (retro-compatibilità).
+    /// </summary>
+    public string ResolvePath(string pathFile)
+        => Path.IsPathRooted(pathFile) ? pathFile : Path.Combine(_uploadPath, pathFile);
 
-    public void EliminaFile(string pathRelativo)
+    public bool FileEsiste(string pathFile) => File.Exists(ResolvePath(pathFile));
+
+    /// <summary>Apre lo stream in lettura per il download in streaming (no buffer in RAM).</summary>
+    public Stream OpenRead(string pathFile)
+        => new FileStream(ResolvePath(pathFile), FileMode.Open, FileAccess.Read, FileShare.Read);
+
+    public void EliminaFile(string pathFile)
     {
-        var pathCompleto = GetPathCompleto(pathRelativo);
-        if (File.Exists(pathCompleto))
-            File.Delete(pathCompleto);
+        var path = ResolvePath(pathFile);
+        if (File.Exists(path)) File.Delete(path);
     }
-
-    public bool FileEsiste(string pathRelativo)
-        => File.Exists(GetPathCompleto(pathRelativo));
 
     /// <summary>
     /// Valida la firma binaria (magic bytes) del file caricato,

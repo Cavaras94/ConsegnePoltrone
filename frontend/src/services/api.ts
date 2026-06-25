@@ -16,6 +16,24 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Scarica un blob da una url qualsiasi (relativa all'API o assoluta verso S3).
+// Il frontend legge solo `documento.url` e passa questa: non sa né gli importa
+// dove il file risieda fisicamente.
+export async function fetchBlob(url: string): Promise<Blob> {
+  const { data } = await api.get(url, { responseType: 'blob' });
+  return data;
+}
+
+export async function downloadBlob(url: string, nomeFile: string): Promise<void> {
+  const blob = await fetchBlob(url);
+  const objectUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = objectUrl;
+  a.download = nomeFile;
+  a.click();
+  URL.revokeObjectURL(objectUrl);
+}
+
 // Interceptor: gestisce gli errori 401
 api.interceptors.response.use(
   (response) => response,
