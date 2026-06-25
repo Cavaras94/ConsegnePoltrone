@@ -6,6 +6,7 @@ import {
   Upload, Download, Trash2, CheckCircle, Loader2, AlertCircle, Info, Wrench, Eye, Navigation
 } from 'lucide-react';
 import DocumentPreview from '../components/ui/DocumentPreview';
+import { useToast } from '../components/ui/Toast';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { useDropzone } from 'react-dropzone';
@@ -335,9 +336,11 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 function DeleteDocBtn({ lavoroId, docId, onSuccess }: { lavoroId: number; docId: number; onSuccess: () => void }) {
+  const toast = useToast();
   const { mutate, isPending } = useMutation({
     mutationFn: () => lavoriService.eliminaDocumento(lavoroId, docId),
-    onSuccess,
+    onSuccess: () => { toast.success('Documento eliminato'); onSuccess(); },
+    onError: () => toast.error('Errore durante l\'eliminazione'),
   });
   return (
     <button onClick={() => confirm('Eliminare questo documento?') && mutate()} disabled={isPending}
@@ -383,9 +386,11 @@ function AggiornaStatoModal({ lavoroId, statoCorrente, onClose, onSuccess }: {
 }) {
   const [stato, setStato] = useState<StatoLavoro>(statoCorrente);
   const [note, setNote] = useState('');
+  const toast = useToast();
   const { mutate, isPending } = useMutation({
     mutationFn: () => lavoriService.aggiornaStato(lavoroId, stato, note || undefined),
-    onSuccess,
+    onSuccess: () => { toast.success('Stato aggiornato'); onSuccess(); },
+    onError: () => toast.error('Errore nel salvataggio'),
   });
   return (
     <Modal title="Aggiorna stato lavoro" onClose={onClose}>
@@ -416,9 +421,10 @@ function AggiornaEsitoModal({ lavoroId, onClose, onSuccess }: {
   const [esito, setEsito] = useState<EsitoLavoro>('Completato');
   const [note, setNote] = useState('');
   const [errore, setErrore] = useState('');
+  const toast = useToast();
   const { mutate, isPending } = useMutation({
     mutationFn: () => lavoriService.aggiornaEsito(lavoroId, esito, note || undefined),
-    onSuccess,
+    onSuccess: () => { toast.success('Esito registrato'); onSuccess(); },
     onError: () => setErrore('Errore nel salvataggio'),
   });
   return (
@@ -454,6 +460,7 @@ function UploadDocModal({ lavoroId, onClose, onSuccess }: {
   const [descrizione, setDescrizione] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [errore, setErrore] = useState('');
+  const toast = useToast();
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     multiple: false,
     accept: { 'application/pdf': [], 'image/*': [] },
@@ -464,7 +471,7 @@ function UploadDocModal({ lavoroId, onClose, onSuccess }: {
       if (!file) throw new Error('Seleziona un file');
       return lavoriService.uploadDocumento(lavoroId, file, tipo, descrizione || undefined);
     },
-    onSuccess,
+    onSuccess: () => { toast.success('Documento caricato'); onSuccess(); },
     onError: (e: unknown) => {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setErrore(msg || 'Errore nel caricamento');
