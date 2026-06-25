@@ -14,6 +14,7 @@ import { it } from 'date-fns/locale';
 import type { LavoroList, StatoLavoro, TipoLavoro } from '../types';
 
 type Sezione = 'da_fare' | 'tutti';
+type Categoria = 'tutte' | 'Lavoro' | 'Assistenza';
 type SortDir = 'asc' | 'desc' | null;
 
 // Stati considerati "da fare" (non ancora conclusi)
@@ -53,6 +54,7 @@ export default function Lavori() {
   const [stato,         setStato]         = useState('');
   const [filtroSquadra, setFiltroSquadra] = useState<number | undefined>();
   const [sezione,       setSezione]       = useState<Sezione>('da_fare');
+  const [categoria,     setCategoria]     = useState<Categoria>('tutte');
   const [sortDir,       setSortDir]       = useState<SortDir>(null);
 
   const { data: squadre } = useQuery({
@@ -73,6 +75,14 @@ export default function Lavori() {
 
   // ── Conteggi per toggle ──
   const cntDaFare = useMemo(() => all.filter(l => (STATI_DA_FARE as string[]).includes(l.stato)).length, [all]);
+
+  // Base filtrata per sezione (su cui si calcolano i conteggi categoria)
+  const baseSezione = useMemo(
+    () => sezione === 'da_fare' ? all.filter(l => (STATI_DA_FARE as string[]).includes(l.stato)) : all,
+    [all, sezione],
+  );
+  const cntLavori     = useMemo(() => baseSezione.filter(l => l.categoria === 'Lavoro').length,     [baseSezione]);
+  const cntAssistenze = useMemo(() => baseSezione.filter(l => l.categoria === 'Assistenza').length, [baseSezione]);
 
   // ── Rilevamento conflitti di capacità (su tutti i dati) ──
   // Lavori: max 1 per squadra per giorno
@@ -103,10 +113,10 @@ export default function Lavori() {
     return ids;
   }, [all]);
 
-  // ── Righe visibili: sezione → sort ──
+  // ── Righe visibili: sezione → categoria → sort ──
   const righe = useMemo<LavoroList[]>(() => {
-    let items = all;
-    if (sezione === 'da_fare') items = items.filter(l => (STATI_DA_FARE as string[]).includes(l.stato));
+    let items = baseSezione;
+    if (categoria !== 'tutte') items = items.filter(l => l.categoria === categoria);
     if (!sortDir) return items;
     return [...items].sort((a, b) => {
       const da = a.dataInizio ?? '';
@@ -116,7 +126,7 @@ export default function Lavori() {
       if (!db) return -1;
       return sortDir === 'asc' ? da.localeCompare(db) : db.localeCompare(da);
     });
-  }, [all, sezione, sortDir]);
+  }, [baseSezione, categoria, sortDir]);
 
   const changeSezione = (s: Sezione) => { setSezione(s); setStato(''); };
   const handleSearch = (e: React.FormEvent) => { e.preventDefault(); setCerca(cercaInput); };
@@ -157,6 +167,35 @@ export default function Lavori() {
             <span>{label}</span>
             <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
               sezione === key ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-500'
+            }`}>{cnt}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Filtro secondario categoria (chip) */}
+      <div className="flex items-center gap-2 mb-4 overflow-x-auto">
+        {([
+          { key: 'tutte',      label: 'Tutti',      cnt: baseSezione.length },
+          { key: 'Lavoro',     label: 'Lavori',     cnt: cntLavori          },
+          { key: 'Assistenza', label: 'Assistenze', cnt: cntAssistenze      },
+        ] as { key: Categoria; label: string; cnt: number }[]).map(({ key, label, cnt }) => (
+          <button
+            key={key}
+            onClick={() => setCategoria(key)}
+            aria-pressed={categoria === key}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors flex-shrink-0 ${
+              categoria === key
+                ? key === 'Assistenza'
+                  ? 'bg-amber-50 border-amber-300 text-amber-700'
+                  : 'bg-blue-50 border-blue-300 text-blue-700'
+                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            {label}
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
+              categoria === key
+                ? key === 'Assistenza' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
+                : 'bg-gray-100 text-gray-500'
             }`}>{cnt}</span>
           </button>
         ))}
