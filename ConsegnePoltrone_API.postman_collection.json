@@ -141,6 +141,22 @@
           }
         },
         {
+          "name": "Modifica consegna [Admin]",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteNome\": \"Giovanni Verdi (aggiornato)\",\n  \"clienteTelefono\": \"+39 035 999999\",\n  \"importoDaPagare\": 1550.00,\n  \"trasportatoreId\": 3,\n  \"noteInterne\": \"Note aggiornate\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/consegne/1", "host": ["{{base_url}}"], "path": ["api","consegne","1"] },
+            "description": "Aggiornamento parziale: tutti i campi sono opzionali, vengono modificati solo quelli presenti nel body (PATCH-like). Solo Admin.\n\n> ℹ️ Assegnando un `trasportatoreId` mentre lo stato è `DaPianificare`, lo stato passa automaticamente a `Pianificata`."
+          }
+        },
+        {
           "name": "Pianifica consegna",
           "request": {
             "method": "PATCH",
@@ -170,6 +186,15 @@
             },
             "url": { "raw": "{{base_url}}/api/consegne/1/esito", "host": ["{{base_url}}"], "path": ["api","consegne","1","esito"] },
             "description": "Registra l'esito della consegna.\n\n**Valori esito:** `Consegnata` | `ClienteAssente` | `Rifiutata` | `Danneggiata` | `Altro`\n\nSe esito = `Consegnata` → stato diventa `Consegnata`, altrimenti `NonConsegnata`."
+          }
+        },
+        {
+          "name": "Lista documenti consegna",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/consegne/1/documenti", "host": ["{{base_url}}"], "path": ["api","consegne","1","documenti"] },
+            "description": "Elenco dei documenti allegati alla consegna. I Trasportatori vedono solo i documenti delle proprie consegne.\n\nOgni item: `id`, `nomeFileOriginale`, `contentType`, `dimensioneBytes`, `tipo`, `dataUpload`, `uploadedByNome`, `descrizione`."
           }
         },
         {
@@ -205,6 +230,15 @@
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{base_url}}/api/documenti/1", "host": ["{{base_url}}"], "path": ["api","documenti","1"] },
             "description": "Elimina il documento e il file fisico. Solo Admin. Risposta: 204 No Content."
+          }
+        },
+        {
+          "name": "Elimina consegna [Admin]",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/consegne/1", "host": ["{{base_url}}"], "path": ["api","consegne","1"] },
+            "description": "Elimina la consegna. Solo Admin. Risposta: 204 No Content."
           }
         }
       ]
