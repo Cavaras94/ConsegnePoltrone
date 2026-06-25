@@ -7,26 +7,28 @@ import { StatoBadge } from '../components/ui/StatoBadge';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
+import { Skeleton } from '../components/ui/Skeleton';
 import type { StatoConsegna } from '../types';
 
 export default function Dashboard() {
   const { user, isAdmin, isManager, isTrasportatore } = useAuth();
 
   // Admin/Manager: mostra statistiche globali
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['statistiche'],
     queryFn: reportService.getStatistiche,
     enabled: isAdmin || isManager,
   });
 
   // Trasportatore: mostra le sue consegne di oggi/prossime
-  const { data: consegneResult } = useQuery({
+  const { data: consegneResult, isLoading: consegneLoading } = useQuery({
     queryKey: ['consegne', 'dashboard'],
     queryFn: () => consegneService.getConsegne({ perPagina: 5 }),
     enabled: isTrasportatore,
   });
 
   const oggi = format(new Date(), 'EEEE d MMMM yyyy', { locale: it });
+  const isLoading = ((isAdmin || isManager) && statsLoading) || (isTrasportatore && consegneLoading);
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
@@ -37,6 +39,19 @@ export default function Dashboard() {
         </h1>
         <p className="text-gray-500 text-sm mt-1 capitalize">{oggi}</p>
       </div>
+
+      {/* Skeleton durante il caricamento */}
+      {isLoading && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-xl border border-gray-200 p-4">
+              <Skeleton className="h-9 w-9 rounded-lg mb-3" />
+              <Skeleton className="h-7 w-12 mb-2" />
+              <Skeleton className="h-3 w-20" />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Admin/Manager: statistiche */}
       {(isAdmin || isManager) && stats && (

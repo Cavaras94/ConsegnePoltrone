@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, Fragment } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -9,6 +9,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { consegneService } from '../services/consegne.service';
 import { StatoBadge } from '../components/ui/StatoBadge';
+import { SkeletonRows } from '../components/ui/Skeleton';
 import { format } from 'date-fns';
 import type { ConsegnaList, StatoConsegna } from '../types';
 
@@ -16,6 +17,7 @@ import type { ConsegnaList, StatoConsegna } from '../types';
 
 type Sezione = 'tutte' | 'da_fare' | 'fatte';
 type SortDir = 'asc' | 'desc' | null;
+type SortKey = 'data' | 'cliente' | 'importo';
 
 const STATI_DA_FARE: StatoConsegna[] = ['DaPianificare', 'Pianificata', 'InTransito'];
 const STATI_FATTE:  StatoConsegna[] = ['Consegnata', 'NonConsegnata', 'Annullata'];
@@ -54,8 +56,15 @@ export default function Consegne() {
   const [cercaInput,  setCercaInput]  = useState('');
   const [sezione,     setSezione]     = useState<Sezione>('tutte');
   const [statoFiltro, setStatoFiltro] = useState('');
+  const [sortKey,     setSortKey]     = useState<SortKey>('data');
   const [sortDir,     setSortDir]     = useState<SortDir>(null);
   const [expandedId,  setExpandedId]  = useState<number | null>(null);
+
+  // Debounce ricerca: aggiorna `cerca` 300ms dopo l'ultima digitazione
+  useEffect(() => {
+    const t = setTimeout(() => setCerca(cercaInput.trim()), 300);
+    return () => clearTimeout(t);
+  }, [cercaInput]);
 
   const toggleExpand = (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
@@ -84,28 +93,40 @@ export default function Consegne() {
 
     if (sortDir) {
       items.sort((a, b) => {
-        const da = a.dataPrevistaConsegna ?? '';
-        const db = b.dataPrevistaConsegna ?? '';
-        if (!da && !db) return 0;
-        if (!da) return 1;   // null sempre in fondo
-        if (!db) return -1;
-        return sortDir === 'asc' ? da.localeCompare(db) : db.localeCompare(da);
+        let cmp: number;
+        if (sortKey === 'cliente') {
+          cmp = a.clienteNome.localeCompare(b.clienteNome);
+        } else if (sortKey === 'importo') {
+          cmp = a.importoDaPagare - b.importoDaPagare;
+        } else {
+          const da = a.dataPrevistaConsegna ?? '';
+          const db = b.dataPrevistaConsegna ?? '';
+          if (!da && !db) return 0;
+          if (!da) return 1;   // null sempre in fondo
+          if (!db) return -1;
+          cmp = da.localeCompare(db);
+        }
+        return sortDir === 'asc' ? cmp : -cmp;
       });
     }
     return items;
-  }, [all, sezione, statoFiltro, sortDir]);
+  }, [all, sezione, statoFiltro, sortKey, sortDir]);
 
   // ── Handlers ──
-  const handleSearch = (e: React.FormEvent) => { e.preventDefault(); setCerca(cercaInput); };
-
   const changeSezione = (s: Sezione) => { setSezione(s); setStatoFiltro(''); };
 
-  const cycleSort = () =>
-    setSortDir(d => d === null ? 'asc' : d === 'asc' ? 'desc' : null);
+  // Click su una colonna: se è già attiva cicla asc→desc→off, altrimenti parte da asc
+  const toggleSort = (key: SortKey) => {
+    if (sortKey !== key) { setSortKey(key); setSortDir('asc'); return; }
+    setSortDir(d => d === 'asc' ? 'desc' : d === 'desc' ? null : 'asc');
+  };
 
-  // ── Sort icon ──
-  const SortIcon = sortDir === 'asc' ? ArrowUp : sortDir === 'desc' ? ArrowDown : ArrowUpDown;
-  const sortColor = sortDir ? 'text-blue-600' : 'text-gray-400';
+  // ── Sort icon helper per colonna ──
+  const sortIconFor = (key: SortKey) => {
+    if (sortKey !== key || !sortDir) return { Icon: ArrowUpDown, color: 'text-gray-400' };
+    return { Icon: sortDir === 'asc' ? ArrowUp : ArrowDown, color: 'text-blue-600' };
+  };
+  const dataSort = sortIconFor('data');
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
@@ -145,21 +166,23 @@ export default function Consegne() {
 
       {/* Filtri */}
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <form onSubmit={handleSearch} className="flex-1 relative">
+        <div className="flex-1 relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input
             value={cercaInput}
-            onChange={e => { setCercaInput(e.target.value); if (!e.target.value) { setCercaInput(''); setCerca(''); } }}
+            onChange={e => setCercaInput(e.target.value)}
             placeholder="Cerca per cliente, ordine, città..."
+            aria-label="Cerca consegne"
             className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
           />
-        </form>
+        </div>
         <div className="flex gap-2">
           <div className="flex items-center gap-2 flex-1 sm:flex-none">
             <Filter size={15} className="text-gray-400 flex-shrink-0" />
             <select
               value={statoFiltro}
               onChange={e => setStatoFiltro(e.target.value)}
+              aria-label="Filtra per stato"
               className="flex-1 sm:w-44 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 bg-white"
             >
               {STATI_PER_SEZIONE[sezione].map(s => (
@@ -169,15 +192,16 @@ export default function Consegne() {
           </div>
           {/* Sort by date */}
           <button
-            onClick={cycleSort}
-            title={sortDir === 'asc' ? 'Ordine crescente' : sortDir === 'desc' ? 'Ordine decrescente' : 'Ordina per data prevista'}
+            onClick={() => toggleSort('data')}
+            aria-label="Ordina per data prevista"
+            title={sortKey === 'data' && sortDir === 'asc' ? 'Ordine crescente' : sortKey === 'data' && sortDir === 'desc' ? 'Ordine decrescente' : 'Ordina per data prevista'}
             className={`flex items-center gap-1.5 px-3 py-2.5 border rounded-lg text-sm font-medium transition-colors flex-shrink-0 ${
-              sortDir
+              sortKey === 'data' && sortDir
                 ? 'border-blue-300 bg-blue-50 text-blue-700'
                 : 'border-gray-300 text-gray-600 hover:bg-gray-50'
             }`}
           >
-            <SortIcon size={14} className={sortColor} />
+            <dataSort.Icon size={14} className={dataSort.color} />
             <span className="hidden sm:inline">Data</span>
           </button>
         </div>
@@ -186,17 +210,12 @@ export default function Consegne() {
       {/* Tabella */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center py-16 text-gray-400">
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-              <p className="text-sm">Caricamento...</p>
-            </div>
-          </div>
+          <SkeletonRows rows={8} />
         ) : righe.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-            <Package size={40} className="mb-3 text-gray-200" />
-            <p className="font-medium text-gray-500">Nessuna consegna trovata</p>
-            <p className="text-sm mt-1">Prova a cambiare i filtri</p>
+            <Package size={40} className="mb-3 text-gray-300" />
+            <p className="font-medium text-gray-600">Nessuna consegna trovata</p>
+            <p className="text-sm mt-1 text-gray-500">Prova a cambiare i filtri</p>
           </div>
         ) : (
           <>
@@ -207,17 +226,33 @@ export default function Consegne() {
                   <tr className="bg-gray-50 border-b border-gray-100">
                     <th className="w-8 px-2 py-3" />
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Ordine</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">Cliente</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                      <button
+                        onClick={() => toggleSort('cliente')}
+                        className={`flex items-center gap-1.5 hover:text-blue-600 transition-colors ${sortKey === 'cliente' && sortDir ? 'text-blue-600' : ''}`}
+                      >
+                        Cliente
+                        {(() => { const s = sortIconFor('cliente'); return <s.Icon size={13} className={s.color} />; })()}
+                      </button>
+                    </th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Articoli</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">Da ritirare</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                      <button
+                        onClick={() => toggleSort('importo')}
+                        className={`flex items-center gap-1.5 hover:text-blue-600 transition-colors ${sortKey === 'importo' && sortDir ? 'text-blue-600' : ''}`}
+                      >
+                        Importo
+                        {(() => { const s = sortIconFor('importo'); return <s.Icon size={13} className={s.color} />; })()}
+                      </button>
+                    </th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Stato</th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">
                       <button
-                        onClick={cycleSort}
-                        className={`flex items-center gap-1.5 hover:text-blue-600 transition-colors ${sortDir ? 'text-blue-600' : ''}`}
+                        onClick={() => toggleSort('data')}
+                        className={`flex items-center gap-1.5 hover:text-blue-600 transition-colors ${sortKey === 'data' && sortDir ? 'text-blue-600' : ''}`}
                       >
                         Data prevista
-                        <SortIcon size={13} className={sortColor} />
+                        <dataSort.Icon size={13} className={dataSort.color} />
                       </button>
                     </th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">
@@ -232,9 +267,8 @@ export default function Consegne() {
                   {righe.map(c => {
                     const isExpanded = expandedId === c.id;
                     return (
-                      <>
+                      <Fragment key={c.id}>
                         <tr
-                          key={c.id}
                           onClick={() => navigate(`/consegne/${c.id}`)}
                           className={`cursor-pointer transition-colors border-b border-gray-50 ${
                             isExpanded ? 'bg-blue-50/60' : 'hover:bg-blue-50/40'
@@ -246,6 +280,8 @@ export default function Consegne() {
                               onClick={e => toggleExpand(e, c.id)}
                               className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
                               title={isExpanded ? 'Chiudi' : 'Vedi articoli'}
+                              aria-label={isExpanded ? 'Chiudi articoli' : 'Vedi articoli'}
+                              aria-expanded={isExpanded}
                             >
                               {isExpanded
                                 ? <ChevronDown size={14} />
@@ -298,7 +334,7 @@ export default function Consegne() {
 
                         {/* Riga espansa — lista articoli */}
                         {isExpanded && (
-                          <tr key={`${c.id}-exp`} className="bg-blue-50/30 border-b border-blue-100">
+                          <tr className="bg-blue-50/30 border-b border-blue-100">
                             <td />
                             <td colSpan={8} className="px-4 pb-4 pt-2">
                               <div className="border-l-2 border-blue-200 pl-4">
@@ -329,7 +365,7 @@ export default function Consegne() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </Fragment>
                     );
                   })}
                 </tbody>

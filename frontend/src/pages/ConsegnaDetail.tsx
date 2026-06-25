@@ -11,6 +11,7 @@ import { consegneService } from '../services/consegne.service';
 import { documentiService } from '../services/documenti.service';
 import { StatoBadge, EsitoBadge } from '../components/ui/StatoBadge';
 import DocumentPreview from '../components/ui/DocumentPreview';
+import { useToast } from '../components/ui/Toast';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import type { EsitoConsegna, StatoConsegna, TipoDocumento, Documento, ArticoloConsegna } from '../types';
@@ -348,9 +349,11 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 function DeleteDocumentoBtn({ consegnaId, documentoId, onSuccess }: {
   consegnaId: number; documentoId: number; onSuccess: () => void;
 }) {
+  const toast = useToast();
   const { mutate, isPending } = useMutation({
     mutationFn: () => documentiService.eliminaDocumento(consegnaId, documentoId),
-    onSuccess,
+    onSuccess: () => { toast.success('Documento eliminato'); onSuccess(); },
+    onError: () => toast.error('Errore durante l\'eliminazione'),
   });
   return (
     <button onClick={() => confirm('Eliminare questo documento?') && mutate()} disabled={isPending}
@@ -366,9 +369,11 @@ function PianificaModal({ consegnaId, currentDate, onClose, onSuccess }: {
   const [data, setData] = useState(currentDate?.split('T')[0] ?? '');
   const [ore, setOre] = useState('');
   const [errore, setErrore] = useState('');
+  const toast = useToast();
   const { mutate, isPending } = useMutation({
     mutationFn: () => consegneService.pianificaConsegna(consegnaId, data + 'T00:00:00Z', ore ? data + 'T' + ore + ':00Z' : undefined),
-    onSuccess, onError: () => setErrore('Errore nel salvataggio'),
+    onSuccess: () => { toast.success('Data di consegna salvata'); onSuccess(); },
+    onError: () => setErrore('Errore nel salvataggio'),
   });
   return (
     <Modal title="Imposta data di consegna" onClose={onClose}>
@@ -397,9 +402,11 @@ function EsitoModal({ consegnaId, onClose, onSuccess }: {
   const [note, setNote] = useState('');
   const [pagato, setPagato] = useState(false);
   const [errore, setErrore] = useState('');
+  const toast = useToast();
   const { mutate, isPending } = useMutation({
     mutationFn: () => consegneService.aggiornaEsito(consegnaId, esito, new Date().toISOString(), note || undefined, pagato),
-    onSuccess, onError: () => setErrore('Errore nel salvataggio'),
+    onSuccess: () => { toast.success('Esito registrato'); onSuccess(); },
+    onError: () => setErrore('Errore nel salvataggio'),
   });
   return (
     <Modal title="Inserisci esito consegna" onClose={onClose}>
@@ -446,6 +453,7 @@ function UploadModal({ consegnaId, onClose, onSuccess }: {
   const [descrizione, setDescrizione] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [errore, setErrore] = useState('');
+  const toast = useToast();
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     multiple: false,
     accept: { 'application/pdf': [], 'image/*': [] },
@@ -456,7 +464,7 @@ function UploadModal({ consegnaId, onClose, onSuccess }: {
       if (!file) throw new Error('Seleziona un file');
       return documentiService.uploadDocumento(consegnaId, file, tipo, descrizione || undefined);
     },
-    onSuccess,
+    onSuccess: () => { toast.success('Documento caricato'); onSuccess(); },
     onError: (e: unknown) => {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setErrore(msg || 'Errore nel caricamento');

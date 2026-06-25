@@ -21,6 +21,7 @@ export default function Login() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } = useForm<LoginForm>({ resolver: zodResolver(schema) as any });
@@ -96,6 +97,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -116,6 +118,32 @@ export default function Login() {
               {isSubmitting ? 'Accesso in corso...' : 'Accedi'}
             </button>
           </form>
+
+          {/* Hint credenziali demo — solo in sviluppo */}
+          {import.meta.env.DEV && (
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Account demo</p>
+              <div className="grid grid-cols-1 gap-1.5">
+                {[
+                  { email: 'admin@test.it',         ruolo: 'Admin' },
+                  { email: 'manager@test.it',       ruolo: 'Manager' },
+                  { email: 'trasportatore@test.it', ruolo: 'Trasportatore' },
+                  { email: 'caposquadra@test.it',   ruolo: 'Caposquadra' },
+                ].map(u => (
+                  <button
+                    key={u.email}
+                    type="button"
+                    onClick={() => { setValue('email', u.email); setValue('password', 'password'); }}
+                    className="flex items-center justify-between text-left px-2.5 py-1.5 rounded-lg hover:bg-gray-50 text-xs"
+                  >
+                    <span className="font-mono text-gray-600">{u.email}</span>
+                    <span className="text-gray-400">{u.ruolo}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-gray-400 mt-2">Password: <span className="font-mono">password</span> — clicca per compilare</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
