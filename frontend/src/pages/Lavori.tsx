@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { lavoriService } from '../services/lavori.service';
 import { squadreService } from '../services/squadre.service';
 import { StatoLavoroBadge, TIPO_LABELS, CategoriaBadge } from '../components/ui/LavoroBadges';
+import { SkeletonRows } from '../components/ui/Skeleton';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import type { LavoroList, StatoLavoro, TipoLavoro } from '../types';
@@ -56,6 +57,12 @@ export default function Lavori() {
   const [sezione,       setSezione]       = useState<Sezione>('da_fare');
   const [categoria,     setCategoria]     = useState<Categoria>('tutte');
   const [sortDir,       setSortDir]       = useState<SortDir>(null);
+
+  // Debounce ricerca: aggiorna `cerca` 300ms dopo l'ultima digitazione
+  useEffect(() => {
+    const t = setTimeout(() => setCerca(cercaInput.trim()), 300);
+    return () => clearTimeout(t);
+  }, [cercaInput]);
 
   const { data: squadre } = useQuery({
     queryKey: ['squadre'],
@@ -129,7 +136,6 @@ export default function Lavori() {
   }, [baseSezione, categoria, sortDir]);
 
   const changeSezione = (s: Sezione) => { setSezione(s); setStato(''); };
-  const handleSearch = (e: React.FormEvent) => { e.preventDefault(); setCerca(cercaInput); };
   const cycleSort = () => setSortDir(d => d === null ? 'asc' : d === 'asc' ? 'desc' : null);
 
   const SortIcon  = sortDir === 'asc' ? ArrowUp : sortDir === 'desc' ? ArrowDown : ArrowUpDown;
@@ -203,15 +209,16 @@ export default function Lavori() {
 
       {/* Filtri */}
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <form onSubmit={handleSearch} className="flex-1 relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <div className="flex-1 relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input
             value={cercaInput}
-            onChange={e => { setCercaInput(e.target.value); if (!e.target.value) setCerca(''); }}
+            onChange={e => setCercaInput(e.target.value)}
             placeholder="Cerca per cliente, descrizione, città..."
+            aria-label="Cerca lavori"
             className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
           />
-        </form>
+        </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <Filter size={15} className="text-gray-400 flex-shrink-0" />
@@ -253,17 +260,12 @@ export default function Lavori() {
       {/* Lista */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="flex flex-col items-center gap-2 text-gray-400">
-              <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-              <p className="text-sm">Caricamento...</p>
-            </div>
-          </div>
+          <SkeletonRows rows={8} />
         ) : righe.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-            <Wrench size={40} className="mb-3 text-gray-200" />
-            <p className="font-medium text-gray-500">Nessun lavoro trovato</p>
-            <p className="text-sm mt-1">Prova a cambiare i filtri</p>
+            <Wrench size={40} className="mb-3 text-gray-300" />
+            <p className="font-medium text-gray-600">Nessun lavoro trovato</p>
+            <p className="text-sm mt-1 text-gray-500">Prova a cambiare i filtri</p>
           </div>
         ) : (
           <>
